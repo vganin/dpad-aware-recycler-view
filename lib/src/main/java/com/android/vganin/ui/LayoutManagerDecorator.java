@@ -87,8 +87,8 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
 
         final int cameraCenterX = (int) ((parentRight + parentLeft) * mScrollOffsetFraction);
         final int cameraCenterY = (int) ((parentBottom + parentTop) * mScrollOffsetFraction);
-        final int childHalfWidth = (childRight - childLeft) / 2;
-        final int childHalfHeight = (childBottom - childTop) / 2;
+        final int childHalfWidth = (int) Math.ceil((childRight - childLeft) * 0.5);
+        final int childHalfHeight = (int) Math.ceil((childBottom - childTop) * 0.5);
 
         final int cameraLeft = cameraCenterX - childHalfWidth;
         final int cameraRight = cameraCenterX + childHalfWidth;
