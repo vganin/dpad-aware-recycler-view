@@ -47,11 +47,11 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
      */
     private final RecyclerView.LayoutManager mLayoutManager;
 
-    /**
-     * Fraction of parent size which always will be offset from border to currently focused item
-     * view center.
-     */
-    private Float mScrollOffsetFraction = 0.5f;
+    /** @see AnimatedRecyclerView#mScrollOffsetFractionX */
+    private Float mScrollOffsetFractionX;
+
+    /** @see AnimatedRecyclerView#mScrollOffsetFractionY */
+    private Float mScrollOffsetFractionY;
 
     public LayoutManagerDecorator(RecyclerView.LayoutManager lm) {
         mLayoutManager = lm;
@@ -61,18 +61,33 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
      * This constructor enables sticky scrolling behavior with supplied value as offset fraction.
      *
      * @param lm {@link android.support.v7.widget.RecyclerView.LayoutManager} instance to be wrapped
-     * @param scrollOffsetFraction offset fraction from some border which will hold while scrolling
-     *                             with dpad
+     * @param scrollOffsetFractionX offset fraction from left border which will hold while scrolling
+     *                              with dpad
+     * @param scrollOffsetFractionY offset fraction from top border which will hold while scrolling
+     *                              with dpad
      */
-    public LayoutManagerDecorator(RecyclerView.LayoutManager lm, float scrollOffsetFraction) {
+    public LayoutManagerDecorator(RecyclerView.LayoutManager lm,
+            Float scrollOffsetFractionX, Float scrollOffsetFractionY) {
         mLayoutManager = lm;
-        mScrollOffsetFraction = scrollOffsetFraction;
+
+        mScrollOffsetFractionX = scrollOffsetFractionX;
+        mScrollOffsetFractionY = scrollOffsetFractionY;
+    }
+
+    /** @see AnimatedRecyclerView#setScrollOffsetFractionX(Float) */
+    public void setScrollOffsetFractionX(Float scrollOffsetFraction) {
+        mScrollOffsetFractionX = scrollOffsetFraction;
+    }
+
+    /** @see AnimatedRecyclerView#setScrollOffsetFractionY(Float) */
+    public void setScrollOffsetFractionY(Float scrollOffsetFraction) {
+        mScrollOffsetFractionY = scrollOffsetFraction;
     }
 
     @Override
     public boolean requestChildRectangleOnScreen(RecyclerView parent, View child, Rect rect,
             boolean immediate) {
-        if (mScrollOffsetFraction == null) {
+        if (mScrollOffsetFractionX == null && mScrollOffsetFractionY == null) {
             return mLayoutManager.requestChildRectangleOnScreen(parent, child, rect, immediate);
         }
 
@@ -85,15 +100,30 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
         final int childRight = childLeft + rect.width();
         final int childBottom = childTop + rect.height();
 
-        final int cameraCenterX = (int) ((parentRight + parentLeft) * mScrollOffsetFraction);
-        final int cameraCenterY = (int) ((parentBottom + parentTop) * mScrollOffsetFraction);
-        final int childHalfWidth = (int) Math.ceil((childRight - childLeft) * 0.5);
-        final int childHalfHeight = (int) Math.ceil((childBottom - childTop) * 0.5);
+        int cameraLeft;
+        int cameraRight;
+        int cameraTop;
+        int cameraBottom;
 
-        final int cameraLeft = cameraCenterX - childHalfWidth;
-        final int cameraRight = cameraCenterX + childHalfWidth;
-        final int cameraTop = cameraCenterY - childHalfHeight;
-        final int cameraBottom = cameraCenterY + childHalfHeight;
+        if (mScrollOffsetFractionX == null) {
+            cameraLeft = parentLeft;
+            cameraRight = parentRight;
+        } else {
+            final int cameraCenterX = (int) ((parentRight + parentLeft) * mScrollOffsetFractionX);
+            final int childHalfWidth = (int) Math.ceil((childRight - childLeft) * 0.5);
+            cameraLeft = cameraCenterX - childHalfWidth;
+            cameraRight = cameraCenterX + childHalfWidth;
+        }
+
+        if (mScrollOffsetFractionY == null) {
+            cameraTop = parentTop;
+            cameraBottom = parentBottom;
+        } else {
+            final int cameraCenterY = (int) ((parentBottom + parentTop) * mScrollOffsetFractionY);
+            final int childHalfHeight = (int) Math.ceil((childBottom - childTop) * 0.5);
+            cameraTop = cameraCenterY - childHalfHeight;
+            cameraBottom = cameraCenterY + childHalfHeight;
+        }
 
         final int offScreenLeft = Math.min(0, childLeft - cameraLeft);
         final int offScreenTop = Math.min(0, childTop - cameraTop);
