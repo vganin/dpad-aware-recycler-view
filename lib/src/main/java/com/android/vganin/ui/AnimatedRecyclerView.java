@@ -26,6 +26,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.View;
 
 import java.lang.reflect.InvocationTargetException;
@@ -53,6 +54,8 @@ public class AnimatedRecyclerView extends RecyclerView {
     private Drawable mBackgroundSelector;
 
     private Drawable mForegroundSelector;
+
+    private int mNavKeyPressedEventCount = 0;
 
     private WeakHashMap<Drawable, ObjectAnimator> mSelectorAnimators =
             new WeakHashMap<Drawable, ObjectAnimator>();
@@ -141,16 +144,40 @@ public class AnimatedRecyclerView extends RecyclerView {
     }
 
     @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+            case KeyEvent.KEYCODE_DPAD_UP:
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                switch (event.getAction()) {
+                    case KeyEvent.ACTION_UP:
+                        mNavKeyPressedEventCount = 0;
+                        break;
+                    case KeyEvent.ACTION_DOWN:
+                        mNavKeyPressedEventCount++;
+                }
+        }
+
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
+
+        int duration = mNavKeyPressedEventCount < 2
+                ? mSelectionDuration : 0;
 
         Rect selectorRect = new Rect();
         child.getHitRect(selectorRect);
         if (mForegroundSelector != null) {
-            animateSelectorChange(mForegroundSelector, selectorRect, mSelectionDuration);
+            animateSelectorChange(mForegroundSelector, selectorRect, duration);
         }
         if (mBackgroundSelector != null) {
-            animateSelectorChange(mBackgroundSelector, selectorRect, mSelectionDuration);
+            animateSelectorChange(mBackgroundSelector, selectorRect, duration);
         }
     }
 
@@ -255,9 +282,6 @@ public class AnimatedRecyclerView extends RecyclerView {
         }
 
         selectorAnimator.setDuration(duration);
-
-        if (!selectorAnimator.isRunning()) {
-            selectorAnimator.start();
-        }
+        selectorAnimator.start();
     }
 }
