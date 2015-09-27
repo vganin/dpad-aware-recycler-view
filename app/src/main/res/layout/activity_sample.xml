@@ -8,6 +8,9 @@
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:foregroundSelector="@drawable/selector_item_foreground"
+        app:backgroundSelector="@drawable/selector_item_background"
+        app:selectionDuration="200"
         app:scrollOffsetX="50%"
         app:scrollOffsetY="50%"/>
     

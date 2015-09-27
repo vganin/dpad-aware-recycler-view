@@ -16,18 +16,25 @@
 
 package com.android.vganin.ui;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.WeakHashMap;
 
 public class AnimatedRecyclerView extends RecyclerView {
+
+    private static final String BOUNDS_PROP_NAME = "bounds";
 
     /**
      * Fraction of parent size which always will be offset from left border to currently focused
@@ -40,6 +47,15 @@ public class AnimatedRecyclerView extends RecyclerView {
      * item view center.
      */
     private Float mScrollOffsetFractionY;
+
+    private int mSelectionDuration = 0;
+
+    private Drawable mBackgroundSelector;
+
+    private Drawable mForegroundSelector;
+
+    private WeakHashMap<Drawable, ObjectAnimator> mSelectorAnimators =
+            new WeakHashMap<Drawable, ObjectAnimator>();
 
     public AnimatedRecyclerView(Context context) {
         super(context);
@@ -56,6 +72,38 @@ public class AnimatedRecyclerView extends RecyclerView {
         init(context, attrs, defStyle);
     }
 
+    public void setSelectionDuration(int duration) {
+        mSelectionDuration = duration;
+    }
+
+    public int getSelectionDuration() {
+        return mSelectionDuration;
+    }
+
+    public void setBackgroundSelector(Drawable drawable) {
+        mBackgroundSelector = drawable;
+    }
+
+    public void setBackgroundSelector(int resId) {
+        mBackgroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+    }
+
+    public Drawable getBackgroundSelector() {
+        return mBackgroundSelector;
+    }
+
+    public void setForegroundSelector(Drawable drawable) {
+        mForegroundSelector = drawable;
+    }
+
+    public void setForegroundSelector(int resId) {
+        mForegroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+    }
+
+    public Drawable getForegroundSelector() {
+        return mForegroundSelector;
+    }
+
     /**
      * Sets scroll offset from left border. Pass <code>null</code> to disable feature.
      *
@@ -70,6 +118,10 @@ public class AnimatedRecyclerView extends RecyclerView {
         }
     }
 
+    public Float getScrollOffsetFractionX() {
+        return mScrollOffsetFractionX;
+    }
+
     /**
      * Sets scroll offset from top border. Pass <code>null</code> to disable feature.
      *
@@ -81,6 +133,37 @@ public class AnimatedRecyclerView extends RecyclerView {
         LayoutManagerDecorator layoutWrapper = (LayoutManagerDecorator) getLayoutManager();
         if (layoutWrapper != null) {
             layoutWrapper.setScrollOffsetFractionY(mScrollOffsetFractionY);
+        }
+    }
+
+    public Float getScrollOffsetFractionY() {
+        return mScrollOffsetFractionY;
+    }
+
+    @Override
+    public void requestChildFocus(View child, View focused) {
+        super.requestChildFocus(child, focused);
+
+        Rect selectorRect = new Rect();
+        child.getHitRect(selectorRect);
+        if (mForegroundSelector != null) {
+            animateSelectorChange(mForegroundSelector, selectorRect, mSelectionDuration);
+        }
+        if (mBackgroundSelector != null) {
+            animateSelectorChange(mBackgroundSelector, selectorRect, mSelectionDuration);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(@NonNull Canvas canvas) {
+        if (mBackgroundSelector != null) {
+            mBackgroundSelector.draw(canvas);
+        }
+
+        super.dispatchDraw(canvas);
+
+        if (mForegroundSelector != null) {
+            mForegroundSelector.draw(canvas);
         }
     }
 
@@ -125,7 +208,56 @@ public class AnimatedRecyclerView extends RecyclerView {
                         R.styleable.AnimatedRecyclerView_scrollOffsetY, 1, 1, 0f);
             }
 
+            if (ta.hasValue(R.styleable.AnimatedRecyclerView_backgroundSelector)) {
+                setBackgroundSelector(ta.getDrawable(
+                        R.styleable.AnimatedRecyclerView_backgroundSelector));
+            }
+
+            if (ta.hasValue(R.styleable.AnimatedRecyclerView_foregroundSelector)) {
+                setForegroundSelector(ta.getDrawable(
+                        R.styleable.AnimatedRecyclerView_foregroundSelector));
+            }
+
+            if (ta.hasValue(R.styleable.AnimatedRecyclerView_selectionDuration)) {
+                setSelectionDuration(ta.getInt(
+                        R.styleable.AnimatedRecyclerView_selectionDuration, 0));
+            }
+
             ta.recycle();
+        }
+    }
+
+    /**
+     * Animates selector {@link Drawable} when changes happen.
+     *
+     * @param selectorDrawable {@link Drawable} instance represents selector
+     * @param dest             destination
+     * @param duration         animation duration in ms
+     */
+    protected void animateSelectorChange(Drawable selectorDrawable, Rect dest, long duration) {
+        Rect source = new Rect(selectorDrawable.getBounds());
+
+        ObjectAnimator selectorAnimator;
+        if ((selectorAnimator = mSelectorAnimators.get(selectorDrawable)) == null) {
+            selectorAnimator = ObjectAnimator.ofObject(
+                    selectorDrawable, BOUNDS_PROP_NAME, new RectEvaluator(), source, dest);
+
+            selectorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    invalidate();
+                }
+            });
+
+            mSelectorAnimators.put(selectorDrawable, selectorAnimator);
+        } else {
+            selectorAnimator.getValues()[0].setObjectValues(source, dest);
+        }
+
+        selectorAnimator.setDuration(duration);
+
+        if (!selectorAnimator.isRunning()) {
+            selectorAnimator.start();
         }
     }
 }

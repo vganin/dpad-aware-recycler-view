@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="AnimatedRecyclerView">
+        <attr name="backgroundSelector" format="reference"/>
+        <attr name="foregroundSelector" format="reference"/>
+        <attr name="selectionDuration" format="integer"/>
         <attr name="scrollOffsetX" format="fraction"/>
         <attr name="scrollOffsetY" format="fraction"/>
     </declare-styleable>
