@@ -19,6 +19,7 @@ package com.android.vganin.ui;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
@@ -56,7 +57,7 @@ public class AnimatedRecyclerView extends RecyclerView {
     }
 
     /**
-     * Sets scroll offset from left border.
+     * Sets scroll offset from left border. Pass <code>null</code> to disable feature.
      *
      * @param scrollOffsetFraction scroll offset from left border
      */
@@ -70,7 +71,7 @@ public class AnimatedRecyclerView extends RecyclerView {
     }
 
     /**
-     * Sets scroll offset from top border.
+     * Sets scroll offset from top border. Pass <code>null</code> to disable feature.
      *
      * @param scrollOffsetFraction scroll offset from top border
      */
