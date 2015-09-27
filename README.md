@@ -12,7 +12,7 @@ Animated extension of RecyclerView widget. Intended for usage with D-pad. To nav
  - `scrollOffsetX` (fraction) - offset from left border as width fraction.
  - `scrollOffsetY` (fraction) - offset from top border as height fraction.
 
- Note: you can leave any of these attributes unspecified if you don't want this functionality. Without any of these you should get vanilla RecyclerView behavior.
+Note: you can leave any of these attributes unspecified if you don't want this functionality. Without any of these you should get vanilla RecyclerView behavior.
 
 ### Example
 ````
