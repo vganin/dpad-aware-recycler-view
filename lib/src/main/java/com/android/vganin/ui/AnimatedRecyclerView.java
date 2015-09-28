@@ -23,6 +23,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
@@ -88,7 +89,11 @@ public class AnimatedRecyclerView extends RecyclerView {
     }
 
     public void setBackgroundSelector(int resId) {
-        mBackgroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mBackgroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+        } else {
+            mBackgroundSelector = getResources().getDrawable(resId);
+        }
     }
 
     public Drawable getBackgroundSelector() {
@@ -100,7 +105,11 @@ public class AnimatedRecyclerView extends RecyclerView {
     }
 
     public void setForegroundSelector(int resId) {
-        mForegroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mForegroundSelector = getResources().getDrawable(resId, getContext().getTheme());
+        } else {
+            mForegroundSelector = getResources().getDrawable(resId);
+        }
     }
 
     public Drawable getForegroundSelector() {
@@ -278,7 +287,7 @@ public class AnimatedRecyclerView extends RecyclerView {
 
             mSelectorAnimators.put(selectorDrawable, selectorAnimator);
         } else {
-            selectorAnimator.getValues()[0].setObjectValues(source, dest);
+            selectorAnimator.setObjectValues(source, dest);
         }
 
         selectorAnimator.setDuration(duration);
