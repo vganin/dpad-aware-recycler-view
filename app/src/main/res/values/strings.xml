@@ -1,4 +1,3 @@
 <resources>
-    <string name="app_name">ArrowNavRecyclerView</string>
-    <string name="title_activity_sample">SampleActivity</string>
+    <string name="app_name">AnimatedRecyclerViewSample</string>
 </resources>

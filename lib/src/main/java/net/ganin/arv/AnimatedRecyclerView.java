@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.vganin.ui;
+package net.ganin.arv;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -30,7 +30,6 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.WeakHashMap;
 
@@ -222,7 +221,7 @@ public class AnimatedRecyclerView extends RecyclerView {
                     .class);
             method.setAccessible(true);
             method.invoke(layout, this);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to apply hack in setLayoutManager(). Perhaps this" +
                     " happened due to RecyclerView has changed or something. Please contact author" +
                     " and report this issue if you want to help.", e);

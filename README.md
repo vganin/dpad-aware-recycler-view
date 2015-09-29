@@ -16,7 +16,7 @@ Note: you can leave any of these attributes unspecified if you don't want this f
 
 ### Example
 ````
-<com.android.vganin.ui.AnimatedRecyclerView
+<net.ganin.arv.AnimatedRecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:foregroundSelector="@drawable/selector_item_foreground"

@@ -5,6 +5,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
+        applicationId 'net.ganin.arv.sample'
         minSdkVersion 12
         targetSdkVersion 22
         versionCode 1

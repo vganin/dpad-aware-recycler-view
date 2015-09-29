@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.vganin.ui;
+package net.ganin.arv;
 
 import android.content.Context;
 import android.graphics.Rect;

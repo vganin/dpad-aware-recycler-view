@@ -1,4 +1,4 @@
-package com.android.vganin.ui.sample;
+package net.ganin.arv.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.android.vganin.ui.AnimatedRecyclerView;
+import net.ganin.arv.AnimatedRecyclerView;
 
 public class SampleActivity extends Activity {
 
