@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.ganin.arv;
+package net.ganin.darv;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -47,10 +47,10 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
      */
     private final RecyclerView.LayoutManager mLayoutManager;
 
-    /** @see AnimatedRecyclerView#mScrollOffsetFractionX */
+    /** @see DpadAwareRecyclerView#mScrollOffsetFractionX */
     private Float mScrollOffsetFractionX;
 
-    /** @see AnimatedRecyclerView#mScrollOffsetFractionY */
+    /** @see DpadAwareRecyclerView#mScrollOffsetFractionY */
     private Float mScrollOffsetFractionY;
 
     public LayoutManagerDecorator(RecyclerView.LayoutManager lm) {
@@ -74,12 +74,12 @@ class LayoutManagerDecorator extends RecyclerView.LayoutManager {
         mScrollOffsetFractionY = scrollOffsetFractionY;
     }
 
-    /** @see AnimatedRecyclerView#setScrollOffsetFractionX(Float) */
+    /** @see DpadAwareRecyclerView#setScrollOffsetFractionX(Float) */
     public void setScrollOffsetFractionX(Float scrollOffsetFraction) {
         mScrollOffsetFractionX = scrollOffsetFraction;
     }
 
-    /** @see AnimatedRecyclerView#setScrollOffsetFractionY(Float) */
+    /** @see DpadAwareRecyclerView#setScrollOffsetFractionY(Float) */
     public void setScrollOffsetFractionY(Float scrollOffsetFraction) {
         mScrollOffsetFractionY = scrollOffsetFraction;
     }

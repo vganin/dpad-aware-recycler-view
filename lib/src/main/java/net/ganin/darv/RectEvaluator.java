@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.ganin.arv;
+package net.ganin.darv;
 
 import android.animation.TypeEvaluator;
 import android.graphics.Rect;

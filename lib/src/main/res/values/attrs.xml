@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="AnimatedRecyclerView">
+    <declare-styleable name="DpadAwareRecyclerView">
         <attr name="backgroundSelector" format="reference"/>
         <attr name="foregroundSelector" format="reference"/>
         <attr name="selectionDuration" format="integer"/>

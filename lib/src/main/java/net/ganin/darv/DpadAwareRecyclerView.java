@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.ganin.arv;
+package net.ganin.darv;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -33,7 +33,7 @@ import android.view.View;
 import java.lang.reflect.Method;
 import java.util.WeakHashMap;
 
-public class AnimatedRecyclerView extends RecyclerView {
+public class DpadAwareRecyclerView extends RecyclerView {
 
     private static final String BOUNDS_PROP_NAME = "bounds";
 
@@ -60,17 +60,17 @@ public class AnimatedRecyclerView extends RecyclerView {
     private WeakHashMap<Drawable, ObjectAnimator> mSelectorAnimators =
             new WeakHashMap<Drawable, ObjectAnimator>();
 
-    public AnimatedRecyclerView(Context context) {
+    public DpadAwareRecyclerView(Context context) {
         super(context);
         init(context, null, 0);
     }
 
-    public AnimatedRecyclerView(Context context, AttributeSet attrs) {
+    public DpadAwareRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs, 0);
     }
 
-    public AnimatedRecyclerView(Context context, AttributeSet attrs, int defStyle) {
+    public DpadAwareRecyclerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context, attrs, defStyle);
     }
@@ -230,32 +230,32 @@ public class AnimatedRecyclerView extends RecyclerView {
 
     private void init(Context context, AttributeSet attrs, int defStyle) {
         if (attrs != null) {
-            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.AnimatedRecyclerView,
+            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.DpadAwareRecyclerView,
                     defStyle, 0);
 
-            if (ta.hasValue(R.styleable.AnimatedRecyclerView_scrollOffsetX)) {
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetX)) {
                 mScrollOffsetFractionX = ta.getFraction(
-                        R.styleable.AnimatedRecyclerView_scrollOffsetX, 1, 1, 0f);
+                        R.styleable.DpadAwareRecyclerView_scrollOffsetX, 1, 1, 0f);
             }
 
-            if (ta.hasValue(R.styleable.AnimatedRecyclerView_scrollOffsetY)) {
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetY)) {
                 mScrollOffsetFractionY = ta.getFraction(
-                        R.styleable.AnimatedRecyclerView_scrollOffsetY, 1, 1, 0f);
+                        R.styleable.DpadAwareRecyclerView_scrollOffsetY, 1, 1, 0f);
             }
 
-            if (ta.hasValue(R.styleable.AnimatedRecyclerView_backgroundSelector)) {
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_backgroundSelector)) {
                 setBackgroundSelector(ta.getDrawable(
-                        R.styleable.AnimatedRecyclerView_backgroundSelector));
+                        R.styleable.DpadAwareRecyclerView_backgroundSelector));
             }
 
-            if (ta.hasValue(R.styleable.AnimatedRecyclerView_foregroundSelector)) {
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_foregroundSelector)) {
                 setForegroundSelector(ta.getDrawable(
-                        R.styleable.AnimatedRecyclerView_foregroundSelector));
+                        R.styleable.DpadAwareRecyclerView_foregroundSelector));
             }
 
-            if (ta.hasValue(R.styleable.AnimatedRecyclerView_selectionDuration)) {
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_selectionDuration)) {
                 setSelectionDuration(ta.getInt(
-                        R.styleable.AnimatedRecyclerView_selectionDuration, 0));
+                        R.styleable.DpadAwareRecyclerView_selectionDuration, 0));
             }
 
             ta.recycle();

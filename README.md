@@ -1,5 +1,5 @@
-# AnimatedRecyclerView
-Animated extension of RecyclerView widget. Intended for usage with D-pad. To navigate with D-pad, your adapter items must be focusable.
+# DpadAwareRecyclerView
+D-pad friendly extension of RecyclerView widget.
 
 ### Newly included features
  - Floating `Drawable` selectors: background and foreground.
@@ -12,11 +12,11 @@ Animated extension of RecyclerView widget. Intended for usage with D-pad. To nav
  - `scrollOffsetX` (fraction) - offset from left border as width fraction.
  - `scrollOffsetY` (fraction) - offset from top border as height fraction.
 
-Note: you can leave any of these attributes unspecified if you don't want this functionality. Without any of these you should get vanilla RecyclerView behavior.
+Note: you can leave any of these attributes unspecified if you don't want this functionality. Without any of these you should get vanilla RecyclerView behavior (almost).
 
 ### Example
 ````
-<net.ganin.arv.AnimatedRecyclerView
+<net.ganin.darv.DpadAwareRecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:foregroundSelector="@drawable/selector_item_foreground"

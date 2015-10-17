@@ -1,4 +1,4 @@
-package net.ganin.arv.sample;
+package net.ganin.darv.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,8 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import net.ganin.arv.AnimatedRecyclerView;
-import net.ganin.arv.GridLayoutManager;
+import net.ganin.darv.DpadAwareRecyclerView;
+import net.ganin.darv.GridLayoutManager;
 
 public class SampleActivity extends Activity {
 
@@ -46,7 +46,7 @@ public class SampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
 
-        AnimatedRecyclerView list = (AnimatedRecyclerView) findViewById(R.id.list);
+        DpadAwareRecyclerView list = (DpadAwareRecyclerView) findViewById(R.id.list);
 
         list.setLayoutManager(new GridLayoutManager(this, COLUMNS_NUM));
 
