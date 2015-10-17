@@ -2,20 +2,20 @@ package net.ganin.arv.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import net.ganin.arv.AnimatedRecyclerView;
+import net.ganin.arv.GridLayoutManager;
 
 public class SampleActivity extends Activity {
 
-    private static final String[] SAMPLE_DATA = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque elementum, nisl vel ornare gravida, leo odio volutpat ex, ac blandit eros eros id ante."
+    private static final String[] SAMPLE_DATA = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
             .split(" ");
 
-    private static final int COLUMNS_NUM = 2;
+    private static final int COLUMNS_NUM = 3;
 
     private static class RowController extends RecyclerView.ViewHolder {
 
