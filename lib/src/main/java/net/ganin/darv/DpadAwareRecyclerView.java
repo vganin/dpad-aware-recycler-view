@@ -30,6 +30,7 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.animation.LinearInterpolator;
 
 import java.lang.reflect.Method;
 import java.util.WeakHashMap;
@@ -62,6 +63,8 @@ public class DpadAwareRecyclerView extends RecyclerView
         }
     };
 
+    private final Rect mSelectorDestRect = new Rect();
+
     /**
      * Fraction of parent size which always will be offset from left border to currently focused
      * item view center.
@@ -79,8 +82,6 @@ public class DpadAwareRecyclerView extends RecyclerView
     private Drawable mBackgroundSelector;
 
     private Drawable mForegroundSelector;
-
-    private int mNavKeyPressedEventCount = 0;
 
     private WeakHashMap<Drawable, ObjectAnimator> mSelectorAnimators =
             new WeakHashMap<Drawable, ObjectAnimator>();
@@ -199,39 +200,29 @@ public class DpadAwareRecyclerView extends RecyclerView
     public boolean dispatchKeyEvent(KeyEvent event) {
         enforceSelectorsVisibility(isInTouchMode(), hasFocus());
 
-        int keyCode = event.getKeyCode();
-
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-            case KeyEvent.KEYCODE_DPAD_UP:
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                switch (event.getAction()) {
-                    case KeyEvent.ACTION_UP:
-                        mNavKeyPressedEventCount = 0;
-                        break;
-                    case KeyEvent.ACTION_DOWN:
-                        mNavKeyPressedEventCount++;
-                }
-        }
-
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void onScrolled(int dx, int dy) {
+        super.onScrolled(dx, dy);
+
+        mSelectorDestRect.offset(dx, dy);
     }
 
     @Override
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
 
-        int duration = mNavKeyPressedEventCount < 2
-                ? mSelectionDuration : 0;
+        int duration =  mSelectionDuration;
 
-        Rect selectorRect = new Rect();
-        child.getHitRect(selectorRect);
+        child.getHitRect(mSelectorDestRect);
+
         if (mForegroundSelector != null) {
-            animateSelectorChange(mForegroundSelector, selectorRect, duration);
+            animateSelectorChange(mForegroundSelector, duration);
         }
         if (mBackgroundSelector != null) {
-            animateSelectorChange(mBackgroundSelector, selectorRect, duration);
+            animateSelectorChange(mBackgroundSelector, duration);
         }
     }
 
@@ -312,16 +303,15 @@ public class DpadAwareRecyclerView extends RecyclerView
      * Animates selector {@link Drawable} when changes happen.
      *
      * @param selectorDrawable {@link Drawable} instance represents selector
-     * @param dest             destination
      * @param duration         animation duration in ms
      */
-    protected void animateSelectorChange(Drawable selectorDrawable, Rect dest, long duration) {
+    protected void animateSelectorChange(Drawable selectorDrawable, long duration) {
         Rect source = new Rect(selectorDrawable.getBounds());
 
         ObjectAnimator selectorAnimator;
         if ((selectorAnimator = mSelectorAnimators.get(selectorDrawable)) == null) {
             selectorAnimator = ObjectAnimator.ofObject(
-                    selectorDrawable, BOUNDS_PROP_NAME, new RectEvaluator(), source, dest);
+                    selectorDrawable, BOUNDS_PROP_NAME, new RectEvaluator(), source, mSelectorDestRect);
 
             selectorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
@@ -330,9 +320,11 @@ public class DpadAwareRecyclerView extends RecyclerView
                 }
             });
 
+            selectorAnimator.setInterpolator(new LinearInterpolator());
+
             mSelectorAnimators.put(selectorDrawable, selectorAnimator);
         } else {
-            selectorAnimator.setObjectValues(source, dest);
+            selectorAnimator.setObjectValues(source, mSelectorDestRect);
         }
 
         selectorAnimator.setDuration(duration);
