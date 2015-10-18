@@ -1,5 +1,5 @@
 # DpadAwareRecyclerView
-D-pad friendly extension of RecyclerView widget.
+D-pad friendly extension of RecyclerView widget. In order to enable D-pad navigation you must make your items focusable.
 
 ### Newly included features
  - Floating `Drawable` selectors: background and foreground.
