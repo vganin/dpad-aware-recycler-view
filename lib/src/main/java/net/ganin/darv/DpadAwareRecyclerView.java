@@ -243,7 +243,7 @@ public class DpadAwareRecyclerView extends RecyclerView
     @Override
     public boolean requestChildRectangleOnScreen(View child, Rect rect, boolean immediate) {
         return super.requestChildRectangleOnScreen(child, rect,
-                mSmoothScrolling == null ? immediate : !mSmoothScrolling);
+                immediate || mSmoothScrolling != null && !mSmoothScrolling);
     }
 
     @Override
