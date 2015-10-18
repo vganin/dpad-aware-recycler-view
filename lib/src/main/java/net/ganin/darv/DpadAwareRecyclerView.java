@@ -29,13 +29,38 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import java.lang.reflect.Method;
 import java.util.WeakHashMap;
 
-public class DpadAwareRecyclerView extends RecyclerView {
+public class DpadAwareRecyclerView extends RecyclerView
+        implements ViewTreeObserver.OnTouchModeChangeListener {
 
     private static final String BOUNDS_PROP_NAME = "bounds";
+
+    /**
+     * Callback for {@link Drawable} selectors. View must keep this reference in order for
+     * {@link java.lang.ref.WeakReference} in selectors to survive.
+     *
+     * @see Drawable#setCallback(Drawable.Callback)
+     */
+    private final Drawable.Callback mSelectorCallback = new Drawable.Callback() {
+        @Override
+        public void invalidateDrawable(Drawable who) {
+            invalidate(who.getBounds());
+        }
+
+        @Override
+        public void scheduleDrawable(Drawable who, Runnable what, long when) {
+            getHandler().postAtTime(what, who, when);
+        }
+
+        @Override
+        public void unscheduleDrawable(Drawable who, Runnable what) {
+            getHandler().removeCallbacks(what, who);
+        }
+    };
 
     /**
      * Fraction of parent size which always will be offset from left border to currently focused
@@ -85,14 +110,11 @@ public class DpadAwareRecyclerView extends RecyclerView {
 
     public void setBackgroundSelector(Drawable drawable) {
         mBackgroundSelector = drawable;
+        setSelectorCallback(mForegroundSelector);
     }
 
     public void setBackgroundSelector(int resId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mBackgroundSelector = getResources().getDrawable(resId, getContext().getTheme());
-        } else {
-            mBackgroundSelector = getResources().getDrawable(resId);
-        }
+        setBackgroundSelector(getDrawableResource(resId));
     }
 
     public Drawable getBackgroundSelector() {
@@ -101,14 +123,11 @@ public class DpadAwareRecyclerView extends RecyclerView {
 
     public void setForegroundSelector(Drawable drawable) {
         mForegroundSelector = drawable;
+        setSelectorCallback(mForegroundSelector);
     }
 
     public void setForegroundSelector(int resId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mForegroundSelector = getResources().getDrawable(resId, getContext().getTheme());
-        } else {
-            mForegroundSelector = getResources().getDrawable(resId);
-        }
+        setForegroundSelector(getDrawableResource(resId));
     }
 
     public Drawable getForegroundSelector() {
@@ -152,7 +171,34 @@ public class DpadAwareRecyclerView extends RecyclerView {
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        ViewTreeObserver obs = getViewTreeObserver();
+        if (obs != null) {
+            obs.addOnTouchModeChangeListener(this);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        ViewTreeObserver obs = getViewTreeObserver();
+        if (obs != null) {
+            obs.removeOnTouchModeChangeListener(this);
+        }
+    }
+
+    @Override
+    public void onTouchModeChanged(boolean isInTouchMode) {
+        enforceSelectorsVisibility(isInTouchMode, hasFocus());
+    }
+
+    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        enforceSelectorsVisibility(isInTouchMode(), hasFocus());
+
         int keyCode = event.getKeyCode();
 
         switch (keyCode) {
@@ -191,13 +237,13 @@ public class DpadAwareRecyclerView extends RecyclerView {
 
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
-        if (mBackgroundSelector != null) {
+        if (mBackgroundSelector != null && mBackgroundSelector.isVisible()) {
             mBackgroundSelector.draw(canvas);
         }
 
         super.dispatchDraw(canvas);
 
-        if (mForegroundSelector != null) {
+        if (mForegroundSelector != null && mForegroundSelector.isVisible()) {
             mForegroundSelector.draw(canvas);
         }
     }
@@ -291,5 +337,26 @@ public class DpadAwareRecyclerView extends RecyclerView {
 
         selectorAnimator.setDuration(duration);
         selectorAnimator.start();
+    }
+
+    private void enforceSelectorsVisibility(boolean isInTouchMode, boolean hasFocus) {
+        boolean visible = !isInTouchMode && hasFocus;
+
+        if (mBackgroundSelector != null) mBackgroundSelector.setVisible(visible, false);
+        if (mForegroundSelector != null) mForegroundSelector.setVisible(visible, false);
+    }
+
+    private Drawable getDrawableResource(int resId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return getResources().getDrawable(resId, getContext().getTheme());
+        } else {
+            return getResources().getDrawable(resId);
+        }
+    }
+
+    private void setSelectorCallback(Drawable selector) {
+        if (selector != null) {
+            selector.setCallback(mSelectorCallback);
+        }
     }
 }
