@@ -8,7 +8,8 @@ D-pad friendly extension of RecyclerView widget. In order to enable D-pad naviga
 ### Widget attributes
  - `foregroundSelector` (reference) - drawable resource for foreground floating selector.
  - `backgroundSelector` (reference) - drawable resource for background floating selector.
- - `selectionDuration` (integer) - selector transition duration in milliseconds. Default: 0 ms.
+ - `selectorVelocity` (integer) - selector transition velocity in px/sec. When less or equals to 0, transition duration will always be immediate. Default: 0 px/sec.
+ - `smoothScrolling` (boolean) - sets smooth scrolling on or off.
  - `scrollOffsetX` (fraction) - offset from left border as width fraction.
  - `scrollOffsetY` (fraction) - offset from top border as height fraction.
 
@@ -21,7 +22,8 @@ Note: you can leave any of these attributes unspecified if you don't want this f
         android:layout_height="match_parent"
         app:foregroundSelector="@drawable/selector_item_foreground"
         app:backgroundSelector="@drawable/selector_item_background"
-        app:selectionDuration="200"
+        app:selectorVelocity="1000"
+        app:smoothScrolling="true"
         app:scrollOffsetX="50%"
         app:scrollOffsetY="50%"/>
  ````

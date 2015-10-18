@@ -77,7 +77,9 @@ public class DpadAwareRecyclerView extends RecyclerView
      */
     private Float mScrollOffsetFractionY;
 
-    private int mSelectionDuration = 0;
+    private int mSelectorVelocity = 0;
+
+    private Boolean mSmoothScrolling;
 
     private Drawable mBackgroundSelector;
 
@@ -101,12 +103,20 @@ public class DpadAwareRecyclerView extends RecyclerView
         init(context, attrs, defStyle);
     }
 
-    public void setSelectionDuration(int duration) {
-        mSelectionDuration = duration;
+    public void setSelectorVelocity(int velocity) {
+        mSelectorVelocity = velocity;
     }
 
-    public int getSelectionDuration() {
-        return mSelectionDuration;
+    public int getSelectorVelocity() {
+        return mSelectorVelocity;
+    }
+
+    public void setSmoothScrolling(boolean smoothScrolling) {
+        mSmoothScrolling = smoothScrolling;
+    }
+
+    public boolean getSmoothScrolling() {
+        return mSmoothScrolling;
     }
 
     public void setBackgroundSelector(Drawable drawable) {
@@ -204,25 +214,16 @@ public class DpadAwareRecyclerView extends RecyclerView
     }
 
     @Override
-    public void onScrolled(int dx, int dy) {
-        super.onScrolled(dx, dy);
-
-        mSelectorDestRect.offset(dx, dy);
-    }
-
-    @Override
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
-
-        int duration =  mSelectionDuration;
 
         child.getHitRect(mSelectorDestRect);
 
         if (mForegroundSelector != null) {
-            animateSelectorChange(mForegroundSelector, duration);
+            animateSelectorChange(mForegroundSelector);
         }
         if (mBackgroundSelector != null) {
-            animateSelectorChange(mBackgroundSelector, duration);
+            animateSelectorChange(mBackgroundSelector);
         }
     }
 
@@ -241,7 +242,8 @@ public class DpadAwareRecyclerView extends RecyclerView
 
     @Override
     public boolean requestChildRectangleOnScreen(View child, Rect rect, boolean immediate) {
-        return super.requestChildRectangleOnScreen(child, rect, true); // Always immediate
+        return super.requestChildRectangleOnScreen(child, rect,
+                mSmoothScrolling == null ? immediate : !mSmoothScrolling);
     }
 
     @Override
@@ -290,9 +292,14 @@ public class DpadAwareRecyclerView extends RecyclerView
                         R.styleable.DpadAwareRecyclerView_foregroundSelector));
             }
 
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_selectionDuration)) {
-                setSelectionDuration(ta.getInt(
-                        R.styleable.DpadAwareRecyclerView_selectionDuration, 0));
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_selectorVelocity)) {
+                setSelectorVelocity(ta.getInt(
+                        R.styleable.DpadAwareRecyclerView_selectorVelocity, 0));
+            }
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_smoothScrolling)) {
+                setSmoothScrolling(ta.getBoolean(
+                        R.styleable.DpadAwareRecyclerView_smoothScrolling, true));
             }
 
             ta.recycle();
@@ -303,10 +310,16 @@ public class DpadAwareRecyclerView extends RecyclerView
      * Animates selector {@link Drawable} when changes happen.
      *
      * @param selectorDrawable {@link Drawable} instance represents selector
-     * @param duration         animation duration in ms
      */
-    protected void animateSelectorChange(Drawable selectorDrawable, long duration) {
+    private void animateSelectorChange(final Drawable selectorDrawable) {
         Rect source = new Rect(selectorDrawable.getBounds());
+
+        int duration = 0;
+        if (mSelectorVelocity > 0) {
+            int dx = mSelectorDestRect.centerX() - source.centerX();
+            int dy = mSelectorDestRect.centerY() - source.centerY();
+            duration = (int) (Math.sqrt(dx * dx + dy * dy) / mSelectorVelocity * 1000);
+        }
 
         ObjectAnimator selectorAnimator;
         if ((selectorAnimator = mSelectorAnimators.get(selectorDrawable)) == null) {
@@ -316,7 +329,7 @@ public class DpadAwareRecyclerView extends RecyclerView
             selectorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    invalidate();
+                    invalidate(selectorDrawable.getBounds());
                 }
             });
 
