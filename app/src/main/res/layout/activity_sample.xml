@@ -11,7 +11,7 @@
         app:foregroundSelector="@drawable/selector_item_foreground"
         app:backgroundSelector="@drawable/selector_item_background"
         app:selectorVelocity="1000"
-        app:smoothScrolling="true"
+        app:smoothScrolling="false"
         app:scrollOffsetX="50%"
         app:scrollOffsetY="50%"/>
     

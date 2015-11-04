@@ -67,6 +67,15 @@ public class SampleActivity extends Activity {
             }
         });
 
+        final int factor = 100;
+        final int sampleLength = SAMPLE_DATA.length;
+        final String[] bigSampleData = new String[sampleLength * factor];
+        for (int i = 0; i < factor; i++) {
+            for (int j = 0; j < sampleLength; j++) {
+                bigSampleData[j + i * sampleLength] = SAMPLE_DATA[j];
+            }
+        }
+
         list.setAdapter(new RecyclerView.Adapter<RowController>() {
 
             @Override
@@ -81,11 +90,11 @@ public class SampleActivity extends Activity {
 
             @Override
             public int getItemCount() {
-                return SAMPLE_DATA.length;
+                return bigSampleData.length;
             }
 
             public String getItem(int position) {
-                return SAMPLE_DATA[position];
+                return bigSampleData[position];
             }
         });
     }
