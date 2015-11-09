@@ -29,14 +29,11 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.WeakHashMap;
 
 public class DpadAwareRecyclerView extends RecyclerView
@@ -168,11 +165,6 @@ public class DpadAwareRecyclerView extends RecyclerView
      */
     public void setScrollOffsetFractionX(Float scrollOffsetFraction) {
         mScrollOffsetFractionX = scrollOffsetFraction;
-
-        LayoutManagerDecorator layoutWrapper = (LayoutManagerDecorator) getLayoutManager();
-        if (layoutWrapper != null) {
-            layoutWrapper.setScrollOffsetFractionX(mScrollOffsetFractionX);
-        }
     }
 
     public Float getScrollOffsetFractionX() {
@@ -186,11 +178,6 @@ public class DpadAwareRecyclerView extends RecyclerView
      */
     public void setScrollOffsetFractionY(Float scrollOffsetFraction) {
         mScrollOffsetFractionY = scrollOffsetFraction;
-
-        LayoutManagerDecorator layoutWrapper = (LayoutManagerDecorator) getLayoutManager();
-        if (layoutWrapper != null) {
-            layoutWrapper.setScrollOffsetFractionY(mScrollOffsetFractionY);
-        }
     }
 
     public Float getScrollOffsetFractionY() {
@@ -263,29 +250,77 @@ public class DpadAwareRecyclerView extends RecyclerView
 
     @Override
     public boolean requestChildRectangleOnScreen(View child, Rect rect, boolean immediate) {
-        return super.requestChildRectangleOnScreen(child, rect,
-                immediate || mSmoothScrolling != null && !mSmoothScrolling);
-    }
+        immediate = immediate || mSmoothScrolling != null && !mSmoothScrolling;
 
-    @Override
-    public void setLayoutManager(LayoutManager layout) {
-        super.setLayoutManager(new LayoutManagerDecorator(layout,
-                mScrollOffsetFractionX, mScrollOffsetFractionY));
-
-        // Because RecyclerView instance is supplied to LayoutManager in super.setLayoutManager()
-        // and we passed our wrapper, original LayoutManager didn't get its reference to
-        // RecyclerView. Plus method setRecyclerView() is package-protected so we have to apply
-        // this dirty hack.
-        try {
-            Method method = LayoutManager.class.getDeclaredMethod("setRecyclerView", RecyclerView
-                    .class);
-            method.setAccessible(true);
-            method.invoke(layout, this);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to apply hack in setLayoutManager(). Perhaps this" +
-                    " happened due to RecyclerView has changed or something. Please contact author" +
-                    " and report this issue if you want to help.", e);
+        if (mScrollOffsetFractionX == null && mScrollOffsetFractionY == null) {
+            return super.requestChildRectangleOnScreen(child, rect, immediate);
         }
+
+        final int parentLeft = getPaddingLeft();
+        final int parentTop = getPaddingTop();
+        final int parentRight = getWidth() - getPaddingRight();
+        final int parentBottom = getHeight() - getPaddingBottom();
+        final int childLeft = child.getLeft() + rect.left;
+        final int childTop = child.getTop() + rect.top;
+        final int childRight = childLeft + rect.width();
+        final int childBottom = childTop + rect.height();
+
+        int cameraLeft;
+        int cameraRight;
+        int cameraTop;
+        int cameraBottom;
+
+        if (mScrollOffsetFractionX == null) {
+            cameraLeft = parentLeft;
+            cameraRight = parentRight;
+        } else {
+            final int cameraCenterX = (int) ((parentRight + parentLeft) * mScrollOffsetFractionX);
+            final int childHalfWidth = (int) Math.ceil((childRight - childLeft) * 0.5);
+            cameraLeft = cameraCenterX - childHalfWidth;
+            cameraRight = cameraCenterX + childHalfWidth;
+        }
+
+        if (mScrollOffsetFractionY == null) {
+            cameraTop = parentTop;
+            cameraBottom = parentBottom;
+        } else {
+            final int cameraCenterY = (int) ((parentBottom + parentTop) * mScrollOffsetFractionY);
+            final int childHalfHeight = (int) Math.ceil((childBottom - childTop) * 0.5);
+            cameraTop = cameraCenterY - childHalfHeight;
+            cameraBottom = cameraCenterY + childHalfHeight;
+        }
+
+        final int offScreenLeft = Math.min(0, childLeft - cameraLeft);
+        final int offScreenTop = Math.min(0, childTop - cameraTop);
+        final int offScreenRight = Math.max(0, childRight - cameraRight);
+        final int offScreenBottom = Math.max(0, childBottom - cameraBottom);
+
+        // Favor the "start" layout direction over the end when bringing one side or the other
+        // of a large rect into view. If we decide to bring in end because start is already
+        // visible, limit the scroll such that start won't go out of bounds.
+        final int dx;
+        if (getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            dx = offScreenRight != 0 ? offScreenRight
+                    : Math.max(offScreenLeft, childRight - parentRight);
+        } else {
+            dx = offScreenLeft != 0 ? offScreenLeft
+                    : Math.min(childLeft - parentLeft, offScreenRight);
+        }
+
+        // Favor bringing the top into view over the bottom. If top is already visible and
+        // we should scroll to make bottom visible, make sure top does not go out of bounds.
+        final int dy = offScreenTop != 0 ? offScreenTop
+                : Math.min(childTop - parentTop, offScreenBottom);
+
+        if (dx != 0 || dy != 0) {
+            if (immediate) {
+                scrollBy(dx, dy);
+            } else {
+                smoothScrollBy(dx, dy);
+            }
+            return true;
+        }
+        return false;
     }
 
     private void init(Context context, AttributeSet attrs, int defStyle) {
