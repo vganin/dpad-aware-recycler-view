@@ -83,7 +83,7 @@ public class DpadAwareRecyclerView extends RecyclerView
 
     private int mSelectorVelocity = 0;
 
-    private Boolean mSmoothScrolling;
+    private boolean mSmoothScrolling = false;
 
     private Drawable mBackgroundSelector;
 
@@ -250,7 +250,7 @@ public class DpadAwareRecyclerView extends RecyclerView
 
     @Override
     public boolean requestChildRectangleOnScreen(View child, Rect rect, boolean immediate) {
-        immediate = immediate || mSmoothScrolling != null && !mSmoothScrolling;
+        immediate = immediate || !mSmoothScrolling;
 
         if (mScrollOffsetFractionX == null && mScrollOffsetFractionY == null) {
             return super.requestChildRectangleOnScreen(child, rect, immediate);
@@ -353,10 +353,8 @@ public class DpadAwareRecyclerView extends RecyclerView
                         R.styleable.DpadAwareRecyclerView_selectorVelocity, 0));
             }
 
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_smoothScrolling)) {
-                setSmoothScrolling(ta.getBoolean(
-                        R.styleable.DpadAwareRecyclerView_smoothScrolling, true));
-            }
+            setSmoothScrolling(ta.getBoolean(
+                    R.styleable.DpadAwareRecyclerView_smoothScrolling, false));
 
             ta.recycle();
         }
