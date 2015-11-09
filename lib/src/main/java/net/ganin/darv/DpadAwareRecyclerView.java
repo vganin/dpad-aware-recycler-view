@@ -239,12 +239,12 @@ public class DpadAwareRecyclerView extends RecyclerView
 
         if ((prevFocused != focused || !isForegroundSelectorBeingAnimated())
                 && mForegroundSelector != null) {
-            animateSelectorChange(mForegroundSelector, FLAG_SHIFT_BACKGROUND, focused, prevFocused);
+            animateSelectorChange(mForegroundSelector, FLAG_SHIFT_FOREGROUND, focused, prevFocused);
         }
 
         if ((prevFocused != focused || !isBackgroundSelectorBeingAnimated())
                 && mBackgroundSelector != null) {
-            animateSelectorChange(mBackgroundSelector, FLAG_SHIFT_FOREGROUND, focused, prevFocused);
+            animateSelectorChange(mBackgroundSelector, FLAG_SHIFT_BACKGROUND, focused, prevFocused);
         }
     }
 
