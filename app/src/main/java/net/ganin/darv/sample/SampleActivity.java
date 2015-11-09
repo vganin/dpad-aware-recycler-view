@@ -46,7 +46,7 @@ public class SampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
 
-        DpadAwareRecyclerView list = (DpadAwareRecyclerView) findViewById(R.id.list);
+        RecyclerView list = (RecyclerView) findViewById(R.id.list);
 
         list.setLayoutManager(new GridLayoutManager(this, COLUMNS_NUM));
 
@@ -71,9 +71,7 @@ public class SampleActivity extends Activity {
         final int sampleLength = SAMPLE_DATA.length;
         final String[] bigSampleData = new String[sampleLength * factor];
         for (int i = 0; i < factor; i++) {
-            for (int j = 0; j < sampleLength; j++) {
-                bigSampleData[j + i * sampleLength] = SAMPLE_DATA[j];
-            }
+            System.arraycopy(SAMPLE_DATA, 0, bigSampleData, i * sampleLength, sampleLength);
         }
 
         list.setAdapter(new RecyclerView.Adapter<RowController>() {
