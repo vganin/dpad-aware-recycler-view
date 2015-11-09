@@ -17,6 +17,7 @@
 package net.ganin.darv;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -30,9 +31,11 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.WeakHashMap;
 
@@ -232,18 +235,16 @@ public class DpadAwareRecyclerView extends RecyclerView
 
         super.requestChildFocus(child, focused);
 
-        Log.d("TEST", "requestChildFocus() " + focused);
-
         focused.getHitRect(mSelectorDestRect);
 
         if ((prevFocused != focused || !isForegroundSelectorBeingAnimated())
                 && mForegroundSelector != null) {
-            animateSelectorChange(mForegroundSelector, FLAG_SHIFT_BACKGROUND);
+            animateSelectorChange(mForegroundSelector, FLAG_SHIFT_BACKGROUND, focused, prevFocused);
         }
 
         if ((prevFocused != focused || !isBackgroundSelectorBeingAnimated())
                 && mBackgroundSelector != null) {
-            animateSelectorChange(mBackgroundSelector, FLAG_SHIFT_FOREGROUND);
+            animateSelectorChange(mBackgroundSelector, FLAG_SHIFT_FOREGROUND, focused, prevFocused);
         }
     }
 
@@ -332,7 +333,7 @@ public class DpadAwareRecyclerView extends RecyclerView
      * @param selectorDrawable {@link Drawable} instance represents selector
      */
     private void animateSelectorChange(final Drawable selectorDrawable,
-            final int selectorFlagDigitShift) {
+            final int selectorFlagDigitShift, View newlyFocused, View prevFocused) {
         ObjectAnimator selectorAnimator;
         if ((selectorAnimator = mSelectorAnimators.get(selectorDrawable)) == null) {
             selectorAnimator = ObjectAnimator.ofObject(
@@ -344,30 +345,6 @@ public class DpadAwareRecyclerView extends RecyclerView
                     invalidate(selectorDrawable.getBounds());
                 }
             });
-
-            selectorAnimator.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                    mSelectorAnimFlag |= 1 << selectorFlagDigitShift;
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mSelectorAnimFlag &= ~(1 << selectorFlagDigitShift);
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    onAnimationEnd(animation);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                    // Nothing
-                }
-            });
-
-//            selectorAnimator.setInterpolator(new LinearInterpolator());
 
             mSelectorAnimators.put(selectorDrawable, selectorAnimator);
         } else {
@@ -381,6 +358,36 @@ public class DpadAwareRecyclerView extends RecyclerView
             int dy = mSelectorDestRect.centerY() - source.centerY();
             duration = (int) (Math.sqrt(dx * dx + dy * dy) / mSelectorVelocity * 1000);
         }
+
+        final WeakReference<View> newlyFocusedRef = new WeakReference<View>(newlyFocused);
+        final WeakReference<View> prevFocusedRef = new WeakReference<View>(prevFocused);
+
+        selectorAnimator.removeAllListeners();
+        selectorAnimator.addListener(new AnimatorListenerAdapter() {
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mSelectorAnimFlag |= 1 << selectorFlagDigitShift;
+
+                if (prevFocusedRef.get() != null) {
+                    prevFocusedRef.get().setSelected(false);
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mSelectorAnimFlag &= ~(1 << selectorFlagDigitShift);
+
+                if (newlyFocusedRef.get() != null) {
+                    newlyFocusedRef.get().setSelected(true);
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEnd(animation);
+            }
+        });
 
         selectorAnimator.setDuration(duration);
         selectorAnimator.start();
