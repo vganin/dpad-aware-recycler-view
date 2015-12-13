@@ -214,18 +214,24 @@ public class DpadAwareRecyclerView extends RecyclerView
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
 
-        if (mLastFocusedChild != focused && getScrollState() == SCROLL_STATE_IDLE) {
+        if (mLastFocusedChild != focused) {
             animateSelectorChange(focused, mLastFocusedChild);
             mLastFocusedChild = focused;
         }
     }
 
     @Override
-    public void onScrollStateChanged(int state) {
-        if (state == SCROLL_STATE_IDLE) {
-            View focused = getFocusedChild();
-            animateSelectorChange(focused, mLastFocusedChild);
-            mLastFocusedChild = focused;
+    public void onScrolled(int dx, int dy) {
+        super.onScrolled(dx, dy);
+
+        mSelectorSourceRect.offset(-dx, -dy);
+        mSelectorDestRect.offset(-dx, -dy);
+
+        if (mSelectorAnimator == null || !mSelectorAnimator.isRunning()) {
+            mBackgroundSelector.getBounds().offset(-dx, -dy);
+            mBackgroundSelector.invalidateSelf();
+            mForegroundSelector.getBounds().offset(-dx, -dy);
+            mForegroundSelector.invalidateSelf();
         }
     }
 
@@ -368,6 +374,10 @@ public class DpadAwareRecyclerView extends RecyclerView
             prevFocused.getHitRect(mSelectorSourceRect);
         } else {
             mSelectorSourceRect.set(0, 0, 0, 0);
+        }
+
+        if (mSelectorSourceRect.equals(mSelectorDestRect)) {
+            return;
         }
 
         if (mSelectorAnimator != null) {
