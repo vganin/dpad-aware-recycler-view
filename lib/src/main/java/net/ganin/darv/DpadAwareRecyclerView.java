@@ -20,7 +20,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -28,6 +27,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
@@ -41,6 +41,31 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private static final String TAG = "DpadAwareRecyclerView";
 
     private static final String BOUNDS_PROP_NAME = "bounds";
+
+    private final static class SelectAnimatorListener extends AnimatorListenerAdapter {
+
+        @Nullable View mToSelect;
+        @Nullable View mToDeselect;
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+            if (mToDeselect != null) {
+                mToDeselect.setSelected(false);
+            }
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if (mToSelect != null) {
+                mToSelect.setSelected(true);
+            }
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+            onAnimationEnd(animation);
+        }
+    }
 
     /**
      * Callback for {@link Drawable} selectors. View must keep this reference in order for
@@ -67,6 +92,13 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     private final Rect mSelectorSourceRect = new Rect();
     private final Rect mSelectorDestRect = new Rect();
+    private final Interpolator mTransitionInterpolator = new LinearInterpolator();
+    private final Animator mBackgroundSelectorAnimator = createAnimatorForSelector(null);
+    private final Animator mForegroundSelectorAnimator = createAnimatorForSelector(null);
+
+    private AnimatorSet mSelectorAnimator; // Unfortunately cannot be reused
+
+    private final SelectAnimatorListener mReusableSelectListener = new SelectAnimatorListener();
 
     /**
      * Fraction of parent size which always will be offset from left border to currently focused
@@ -80,8 +112,6 @@ public class DpadAwareRecyclerView extends RecyclerView implements
      */
     private Float mScrollOffsetFractionY;
 
-    private final Interpolator mTransitionInterpolator = new LinearInterpolator();
-
     private int mSelectorVelocity = 0;
 
     private boolean mSmoothScrolling = false;
@@ -89,8 +119,6 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private Drawable mBackgroundSelector;
 
     private Drawable mForegroundSelector;
-
-    private AnimatorSet mSelectorAnimator;
 
     private View mLastFocusedChild;
 
@@ -164,6 +192,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     public void setBackgroundSelector(Drawable drawable) {
         mBackgroundSelector = drawable;
+        mBackgroundSelectorAnimator.setTarget(mBackgroundSelector);
         setSelectorCallback(mForegroundSelector);
     }
 
@@ -177,6 +206,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     public void setForegroundSelector(Drawable drawable) {
         mForegroundSelector = drawable;
+        mForegroundSelectorAnimator.setTarget(mForegroundSelector);
         setSelectorCallback(mForegroundSelector);
     }
 
@@ -257,7 +287,20 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         super.requestChildFocus(child, focused);
 
         if (mLastFocusedChild != focused) {
-            animateSelectorChange(focused, mLastFocusedChild);
+            // Focused cannot be null
+            focused.getHitRect(mSelectorDestRect);
+
+            if (mLastFocusedChild != null) {
+                mLastFocusedChild.getHitRect(mSelectorSourceRect);
+            } else {
+                mSelectorSourceRect.set(mSelectorDestRect);
+            }
+
+            mReusableSelectListener.mToSelect = focused;
+            mReusableSelectListener.mToDeselect = mLastFocusedChild;
+
+            animateSelectorChange(mReusableSelectListener);
+
             mLastFocusedChild = focused;
         }
     }
@@ -270,10 +313,15 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         mSelectorDestRect.offset(-dx, -dy);
 
         if (mSelectorAnimator == null || !mSelectorAnimator.isRunning()) {
-            mBackgroundSelector.getBounds().offset(-dx, -dy);
-            mBackgroundSelector.invalidateSelf();
-            mForegroundSelector.getBounds().offset(-dx, -dy);
-            mForegroundSelector.invalidateSelf();
+            if (mBackgroundSelector != null) {
+                mBackgroundSelector.getBounds().offset(-dx, -dy);
+                mBackgroundSelector.invalidateSelf();
+            }
+
+            if (mForegroundSelector != null) {
+                mForegroundSelector.getBounds().offset(-dx, -dy);
+                mForegroundSelector.invalidateSelf();
+            }
         }
     }
 
@@ -368,23 +416,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     /**
      * Animates selector {@link Drawable} when changes happen.
      */
-    private void animateSelectorChange(final View newlyFocused, final View prevFocused) {
-        if (newlyFocused == null) {
-            return;
-        } else {
-            newlyFocused.getHitRect(mSelectorDestRect);
-        }
-
-        if (prevFocused != null) {
-            prevFocused.getHitRect(mSelectorSourceRect);
-        } else {
-            mSelectorSourceRect.set(0, 0, 0, 0);
-        }
-
-        if (mSelectorSourceRect.equals(mSelectorDestRect)) {
-            return;
-        }
-
+    private void animateSelectorChange(Animator.AnimatorListener listener) {
         if (mSelectorAnimator != null) {
             mSelectorAnimator.cancel();
         }
@@ -392,36 +424,15 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         mSelectorAnimator = new AnimatorSet();
 
         if (mForegroundSelector != null) {
-            Animator foregroundSelectorAnim = createAnimatorForSelector(mForegroundSelector);
-            mSelectorAnimator.playTogether(foregroundSelectorAnim);
+            mSelectorAnimator.playTogether(mForegroundSelectorAnimator);
         }
 
         if (mBackgroundSelector != null) {
-            Animator backgroundAnimator = createAnimatorForSelector(mBackgroundSelector);
-            mSelectorAnimator.playTogether(backgroundAnimator);
+            mSelectorAnimator.playTogether(mBackgroundSelectorAnimator);
         }
 
         mSelectorAnimator.setInterpolator(mTransitionInterpolator);
-
-        mSelectorAnimator.addListener(new AnimatorListenerAdapter() {
-
-            @Override
-            public void onAnimationStart(Animator animation) {
-                if (prevFocused != null) {
-                    prevFocused.setSelected(false);
-                }
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                newlyFocused.setSelected(true);
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                onAnimationEnd(animation);
-            }
-        });
+        mSelectorAnimator.addListener(listener);
 
         int duration = 0;
         if (mSelectorVelocity > 0) {
@@ -435,18 +446,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     private Animator createAnimatorForSelector(final Drawable selector) {
-        ObjectAnimator animator = ObjectAnimator.ofObject(
+        return ObjectAnimator.ofObject(
                 selector, BOUNDS_PROP_NAME, new RectEvaluator(),
-                mSelectorDestRect);
-
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                invalidate(selector.getBounds());
-            }
-        });
-
-        return animator;
+                mSelectorSourceRect, mSelectorDestRect);
     }
 
     private int computeTravelDuration(int dx, int dy, int velocity) {
