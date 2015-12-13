@@ -285,43 +285,38 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     @Override
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
-
-        if (mLastFocusedChild != focused) {
-            // Focused cannot be null
-            focused.getHitRect(mSelectorDestRect);
-
-            if (mLastFocusedChild != null) {
-                mLastFocusedChild.getHitRect(mSelectorSourceRect);
-            } else {
-                mSelectorSourceRect.set(mSelectorDestRect);
-            }
-
-            mReusableSelectListener.mToSelect = focused;
-            mReusableSelectListener.mToDeselect = mLastFocusedChild;
-
-            animateSelectorChange(mReusableSelectListener);
-
-            mLastFocusedChild = focused;
-        }
+        requestChildFocusInner(child, focused);
     }
 
     @Override
-    public void onScrolled(int dx, int dy) {
-        super.onScrolled(dx, dy);
+    public void onScrollStateChanged(int state) {
+        super.onScrollStateChanged(state);
 
-        mSelectorSourceRect.offset(-dx, -dy);
-        mSelectorDestRect.offset(-dx, -dy);
+        if (state == SCROLL_STATE_IDLE) {
+            View focusedChild = getFocusedChild();
+            requestChildFocusInner(focusedChild, focusedChild);
+        }
+    }
 
-        if (mSelectorAnimator == null || !mSelectorAnimator.isRunning()) {
-            if (mBackgroundSelector != null) {
-                mBackgroundSelector.getBounds().offset(-dx, -dy);
-                mBackgroundSelector.invalidateSelf();
+    private void requestChildFocusInner(View child, View focused) {
+        Drawable refSelector = mBackgroundSelector != null
+                ? mBackgroundSelector : mForegroundSelector;
+
+        if (refSelector != null) {
+            mSelectorSourceRect.set(refSelector.getBounds());
+
+            // Focused cannot be null
+            focused.getHitRect(mSelectorDestRect);
+
+            mReusableSelectListener.mToSelect = child;
+            mReusableSelectListener.mToDeselect = mLastFocusedChild;
+
+            int scrollState = getScrollState();
+            if (scrollState == SCROLL_STATE_IDLE) {
+                animateSelectorChange(mReusableSelectListener);
             }
 
-            if (mForegroundSelector != null) {
-                mForegroundSelector.getBounds().offset(-dx, -dy);
-                mForegroundSelector.invalidateSelf();
-            }
+            mLastFocusedChild = child;
         }
     }
 
