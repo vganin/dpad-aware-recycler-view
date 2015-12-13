@@ -1,31 +1,51 @@
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <net.ganin.darv.DpadAwareRecyclerView
+            android:id="@+id/list1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:foregroundSelector="@drawable/selector_item_foreground"
+            app:backgroundSelector="@drawable/selector_item_background"
+            app:selectorVelocity="1000"
+            app:smoothScrolling="true"
+            app:scrollOffsetX="50%"
+            app:scrollOffsetY="50%"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="center"
+            android:background="@android:color/black"
+            android:alpha="0.5"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@android:color/black"
+            android:alpha="0.5"/>
+    </FrameLayout>
 
     <net.ganin.darv.DpadAwareRecyclerView
-        android:id="@+id/list"
+        android:id="@+id/list2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         app:foregroundSelector="@drawable/selector_item_foreground"
         app:backgroundSelector="@drawable/selector_item_background"
-        app:selectorVelocity="1000"
+        app:selectorVelocity="500"
         app:smoothScrolling="true"
         app:scrollOffsetX="50%"
         app:scrollOffsetY="50%"/>
-    
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_gravity="center"
-        android:background="@android:color/black"
-        android:alpha="0.5"/>
 
-    <View
-        android:layout_width="1dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:background="@android:color/black"
-        android:alpha="0.5"/>
-</FrameLayout>
+</LinearLayout>

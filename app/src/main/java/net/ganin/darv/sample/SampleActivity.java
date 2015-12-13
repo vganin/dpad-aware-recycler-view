@@ -2,20 +2,18 @@ package net.ganin.darv.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import net.ganin.darv.DpadAwareRecyclerView;
 import net.ganin.darv.GridLayoutManager;
 
 public class SampleActivity extends Activity {
 
     private static final String[] SAMPLE_DATA = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
             .split(" ");
-
-    private static final int COLUMNS_NUM = 3;
 
     private static class RowController extends RecyclerView.ViewHolder {
 
@@ -46,9 +44,12 @@ public class SampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
 
-        RecyclerView list = (RecyclerView) findViewById(R.id.list);
+        prepareFirstList((RecyclerView) findViewById(R.id.list1));
+        prepareSecondList((RecyclerView) findViewById(R.id.list2));
+    }
 
-        list.setLayoutManager(new GridLayoutManager(this, COLUMNS_NUM));
+    private void prepareFirstList(RecyclerView list) {
+        list.setLayoutManager(new GridLayoutManager(this, 3));
 
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -67,7 +68,7 @@ public class SampleActivity extends Activity {
             }
         });
 
-        final int factor = 100;
+        final int factor = 1;
         final int sampleLength = SAMPLE_DATA.length;
         final String[] bigSampleData = new String[sampleLength * factor];
         for (int i = 0; i < factor; i++) {
@@ -78,7 +79,7 @@ public class SampleActivity extends Activity {
 
             @Override
             public RowController onCreateViewHolder(ViewGroup parent, int viewType) {
-                return new RowController(getLayoutInflater().inflate(R.layout.item, parent, false));
+                return new RowController(getLayoutInflater().inflate(R.layout.item1, parent, false));
             }
 
             @Override
@@ -93,6 +94,29 @@ public class SampleActivity extends Activity {
 
             public String getItem(int position) {
                 return bigSampleData[position];
+            }
+        });
+    }
+
+    private void prepareSecondList(RecyclerView list) {
+        list.setLayoutManager(new GridLayoutManager(this, 1, LinearLayoutManager.HORIZONTAL, false));
+
+        list.setAdapter(new RecyclerView.Adapter<RowController>() {
+
+            @Override
+            public RowController onCreateViewHolder(ViewGroup parent, int viewType) {
+                return new RowController(
+                        getLayoutInflater().inflate(R.layout.item2, parent, false));
+            }
+
+            @Override
+            public void onBindViewHolder(RowController holder, int position) {
+                // All data is static
+            }
+
+            @Override
+            public int getItemCount() {
+                return 100;
             }
         });
     }
