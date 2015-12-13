@@ -36,13 +36,61 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
 public class DpadAwareRecyclerView extends RecyclerView implements
-        ViewTreeObserver.OnGlobalFocusChangeListener {
+        ViewTreeObserver.OnGlobalFocusChangeListener,
+        View.OnClickListener {
+
+    /**
+     * Interface definition for a callback to be invoked when an item in this
+     * DpadAwareRecyclerView has been clicked.
+     */
+    public interface OnItemClickListener {
+        /**
+         * Callback method to be invoked when an item in this DpadAwareRecyclerView has
+         * been clicked.
+         *
+         * @param parent The DpadAwareRecyclerView where the click happened.
+         * @param view The view within the DpadAwareRecyclerView that was clicked (this
+         * will be a view provided by the adapter)
+         * @param position The position of the view in the adapter.
+         * @param id The row id of the item that was clicked.
+         */
+        void onItemClick(DpadAwareRecyclerView parent, View view, int position, long id);
+    }
+
+    /**
+     * <p>Interface definition for a callback to be invoked when
+     * an item in this view has been selected.</p>
+     *
+     * <p>Note that this interface differs from classic
+     * {@link android.widget.AdapterView.OnItemSelectedListener}.
+     */
+    public interface OnItemSelectedListener {
+        /**
+         * Will be called when selector arrives at place.
+         *
+         * @param parent The DpadAwareRecyclerView where the selection happened
+         * @param view The view within the DpadAwareRecyclerView that was selected
+         * @param position The position of the view in the adapter
+         * @param id The row id of the item that is selected
+         */
+        void onItemSelected(DpadAwareRecyclerView parent, View view, int position, long id);
+
+        /**
+         * Will be called immediately after user issues controller command.
+         *
+         * @param parent The DpadAwareRecyclerView where the selection happened
+         * @param view The view within the DpadAwareRecyclerView that was selected
+         * @param position The position of the view in the adapter
+         * @param id The row id of the item that is selected
+         */
+        void onItemFocused(DpadAwareRecyclerView parent, View view, int position, long id);
+    }
 
     private static final String TAG = "DpadAwareRecyclerView";
 
     private static final String BOUNDS_PROP_NAME = "bounds";
 
-    private final static class SelectAnimatorListener extends AnimatorListenerAdapter {
+    private final class SelectAnimatorListener extends AnimatorListenerAdapter {
 
         @Nullable View mToSelect;
         @Nullable View mToDeselect;
@@ -50,14 +98,14 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         @Override
         public void onAnimationStart(Animator animation) {
             if (mToDeselect != null) {
-                mToDeselect.setSelected(false);
+                childSetSelected(mToDeselect, false);
             }
         }
 
         @Override
         public void onAnimationEnd(Animator animation) {
             if (mToSelect != null) {
-                mToSelect.setSelected(true);
+                childSetSelected(mToSelect, true);
             }
         }
 
@@ -121,6 +169,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private Drawable mForegroundSelector;
 
     private View mLastFocusedChild;
+
+    private OnItemClickListener mOnItemClickListener;
+    private OnItemSelectedListener mOnItemSelectedListener;
 
     public DpadAwareRecyclerView(Context context) {
         super(context);
@@ -244,6 +295,22 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         return mScrollOffsetFractionY;
     }
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+    }
+
+    public OnItemClickListener getOnItemClickListener() {
+        return mOnItemClickListener;
+    }
+
+    public void setOnItemSelectedListener(OnItemSelectedListener listener) {
+        mOnItemSelectedListener = listener;
+    }
+
+    public OnItemSelectedListener getOnItemSelectedListener() {
+        return mOnItemSelectedListener;
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -265,6 +332,18 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
+    public void addView(View child, int index) {
+        super.addView(child, index);
+
+        child.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        fireOnItemClickEvent(v);
+    }
+
+    @Override
     public void onGlobalFocusChanged(View oldFocus, View newFocus) {
         boolean hasFocus = hasFocus();
 
@@ -276,7 +355,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
             }
 
             if (mLastFocusedChild != null) {
-                mLastFocusedChild.setSelected(false);
+                childSetSelected(mLastFocusedChild, false);
                 mLastFocusedChild = null;
             }
         }
@@ -285,7 +364,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     @Override
     public void requestChildFocus(View child, View focused) {
         super.requestChildFocus(child, focused);
+
         requestChildFocusInner(child, focused);
+        fireOnItemFocusedEvent(child);
     }
 
     @Override
@@ -468,6 +549,38 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private void setSelectorCallback(Drawable selector) {
         if (selector != null) {
             selector.setCallback(mSelectorCallback);
+        }
+    }
+
+    private void childSetSelected(View child, boolean selected) {
+        child.setSelected(selected);
+
+        if (selected) {
+            fireOnItemSelectedEvent(child);
+        }
+    }
+
+    private void fireOnItemClickEvent(View child) {
+        if (mOnItemClickListener != null) {
+            int position = getChildAdapterPosition(child);
+            long id = getChildItemId(child);
+            mOnItemClickListener.onItemClick(this, child, position, id);
+        }
+    }
+
+    private void fireOnItemFocusedEvent(View child) {
+        if (mOnItemSelectedListener != null) {
+            int position = getChildAdapterPosition(child);
+            long id = getChildItemId(child);
+            mOnItemSelectedListener.onItemFocused(this, child, position, id);
+        }
+    }
+
+    private void fireOnItemSelectedEvent(View child) {
+        if (mOnItemSelectedListener != null) {
+            int position = getChildAdapterPosition(child);
+            long id = getChildItemId(child);
+            mOnItemSelectedListener.onItemSelected(this, child, position, id);
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.ganin.darv.sample;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -8,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import net.ganin.darv.DpadAwareRecyclerView;
 import net.ganin.darv.GridLayoutManager;
 
 public class SampleActivity extends Activity {
@@ -39,16 +41,20 @@ public class SampleActivity extends Activity {
         }
     }
 
+    private TextView mInfo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
 
-        prepareFirstList((RecyclerView) findViewById(R.id.list1));
-        prepareSecondList((RecyclerView) findViewById(R.id.list2));
+        mInfo = (TextView) findViewById(R.id.info);
+
+        prepareFirstList((DpadAwareRecyclerView) findViewById(R.id.list1));
+        prepareSecondList((DpadAwareRecyclerView) findViewById(R.id.list2));
     }
 
-    private void prepareFirstList(RecyclerView list) {
+    private void prepareFirstList(DpadAwareRecyclerView list) {
         list.setLayoutManager(new GridLayoutManager(this, 3));
 
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -96,9 +102,33 @@ public class SampleActivity extends Activity {
                 return bigSampleData[position];
             }
         });
+
+        list.setOnItemSelectedListener(new DpadAwareRecyclerView.OnItemSelectedListener() {
+            @SuppressLint("SetTextI18n") // Allow for testing
+            @Override
+            public void onItemSelected(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                mInfo.setText("Item " + position + " with id " + id + " in first list selected");
+            }
+
+            @Override
+            public void onItemFocused(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                // Not interested
+            }
+        });
+
+        list.setOnItemClickListener(new DpadAwareRecyclerView.OnItemClickListener() {
+            @SuppressLint("SetTextI18n") // Allow for testing
+            @Override
+            public void onItemClick(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                mInfo.setText("Item " + position + " with id " + id + " in first list clicked");
+            }
+        });
     }
 
-    private void prepareSecondList(RecyclerView list) {
+    private void prepareSecondList(DpadAwareRecyclerView list) {
         list.setLayoutManager(new GridLayoutManager(this, 1, LinearLayoutManager.HORIZONTAL, false));
 
         list.setAdapter(new RecyclerView.Adapter<RowController>() {
@@ -117,6 +147,30 @@ public class SampleActivity extends Activity {
             @Override
             public int getItemCount() {
                 return 100;
+            }
+        });
+
+        list.setOnItemSelectedListener(new DpadAwareRecyclerView.OnItemSelectedListener() {
+            @SuppressLint("SetTextI18n") // Allow for testing
+            @Override
+            public void onItemSelected(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                mInfo.setText("Item " + position + " with id " + id + " in second list selected");
+            }
+
+            @Override
+            public void onItemFocused(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                // Not interested
+            }
+        });
+
+        list.setOnItemClickListener(new DpadAwareRecyclerView.OnItemClickListener() {
+            @SuppressLint("SetTextI18n") // Allow for testing
+            @Override
+            public void onItemClick(DpadAwareRecyclerView parent, View view, int position,
+                    long id) {
+                mInfo.setText("Item " + position + " with id " + id + " in second list clicked");
             }
         });
     }
