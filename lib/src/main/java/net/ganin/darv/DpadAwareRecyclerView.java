@@ -30,14 +30,13 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
-public class DpadAwareRecyclerView extends RecyclerView
-        implements ViewTreeObserver.OnTouchModeChangeListener {
+public class DpadAwareRecyclerView extends RecyclerView implements
+        ViewTreeObserver.OnGlobalFocusChangeListener {
 
     private static final String TAG = "DpadAwareRecyclerView";
 
@@ -108,6 +107,43 @@ public class DpadAwareRecyclerView extends RecyclerView
     public DpadAwareRecyclerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context, attrs, defStyle);
+    }
+
+    private void init(Context context, AttributeSet attrs, int defStyle) {
+        if (attrs != null) {
+            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.DpadAwareRecyclerView,
+                    defStyle, 0);
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetX)) {
+                mScrollOffsetFractionX = ta.getFraction(
+                        R.styleable.DpadAwareRecyclerView_scrollOffsetX, 1, 1, 0f);
+            }
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetY)) {
+                mScrollOffsetFractionY = ta.getFraction(
+                        R.styleable.DpadAwareRecyclerView_scrollOffsetY, 1, 1, 0f);
+            }
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_backgroundSelector)) {
+                setBackgroundSelector(ta.getDrawable(
+                        R.styleable.DpadAwareRecyclerView_backgroundSelector));
+            }
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_foregroundSelector)) {
+                setForegroundSelector(ta.getDrawable(
+                        R.styleable.DpadAwareRecyclerView_foregroundSelector));
+            }
+
+            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_selectorVelocity)) {
+                setSelectorVelocity(ta.getInt(
+                        R.styleable.DpadAwareRecyclerView_selectorVelocity, 0));
+            }
+
+            setSmoothScrolling(ta.getBoolean(
+                    R.styleable.DpadAwareRecyclerView_smoothScrolling, false));
+
+            ta.recycle();
+        }
     }
 
     public void setSelectorVelocity(int velocity) {
@@ -184,7 +220,7 @@ public class DpadAwareRecyclerView extends RecyclerView
 
         ViewTreeObserver obs = getViewTreeObserver();
         if (obs != null) {
-            obs.addOnTouchModeChangeListener(this);
+            obs.addOnGlobalFocusChangeListener(this);
         }
     }
 
@@ -194,20 +230,26 @@ public class DpadAwareRecyclerView extends RecyclerView
 
         ViewTreeObserver obs = getViewTreeObserver();
         if (obs != null) {
-            obs.removeOnTouchModeChangeListener(this);
+            obs.removeOnGlobalFocusChangeListener(this);
         }
     }
 
     @Override
-    public void onTouchModeChanged(boolean isInTouchMode) {
-        enforceSelectorsVisibility(isInTouchMode, hasFocus());
-    }
+    public void onGlobalFocusChanged(View oldFocus, View newFocus) {
+        boolean hasFocus = hasFocus();
 
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        enforceSelectorsVisibility(isInTouchMode(), hasFocus());
+        enforceSelectorsVisibility(isInTouchMode(), hasFocus);
 
-        return super.dispatchKeyEvent(event);
+        if (!hasFocus) {
+            if (mSelectorAnimator != null) {
+                mSelectorAnimator.cancel();
+            }
+
+            if (mLastFocusedChild != null) {
+                mLastFocusedChild.setSelected(false);
+                mLastFocusedChild = null;
+            }
+        }
     }
 
     @Override
@@ -321,43 +363,6 @@ public class DpadAwareRecyclerView extends RecyclerView
             return true;
         }
         return false;
-    }
-
-    private void init(Context context, AttributeSet attrs, int defStyle) {
-        if (attrs != null) {
-            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.DpadAwareRecyclerView,
-                    defStyle, 0);
-
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetX)) {
-                mScrollOffsetFractionX = ta.getFraction(
-                        R.styleable.DpadAwareRecyclerView_scrollOffsetX, 1, 1, 0f);
-            }
-
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_scrollOffsetY)) {
-                mScrollOffsetFractionY = ta.getFraction(
-                        R.styleable.DpadAwareRecyclerView_scrollOffsetY, 1, 1, 0f);
-            }
-
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_backgroundSelector)) {
-                setBackgroundSelector(ta.getDrawable(
-                        R.styleable.DpadAwareRecyclerView_backgroundSelector));
-            }
-
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_foregroundSelector)) {
-                setForegroundSelector(ta.getDrawable(
-                        R.styleable.DpadAwareRecyclerView_foregroundSelector));
-            }
-
-            if (ta.hasValue(R.styleable.DpadAwareRecyclerView_selectorVelocity)) {
-                setSelectorVelocity(ta.getInt(
-                        R.styleable.DpadAwareRecyclerView_selectorVelocity, 0));
-            }
-
-            setSmoothScrolling(ta.getBoolean(
-                    R.styleable.DpadAwareRecyclerView_smoothScrolling, false));
-
-            ta.recycle();
-        }
     }
 
     /**
