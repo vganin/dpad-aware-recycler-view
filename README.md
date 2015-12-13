@@ -4,6 +4,7 @@ D-pad friendly extension of RecyclerView widget. In order to enable D-pad naviga
 ### Newly included features
  - Floating `Drawable` selectors: background and foreground.
  - Sticky scrolling which means that 'camera' will be locked on some offset (user provided) from some border.
+ - Classic OnItemClickListener and OnItemSelectedListener support.
 
 ### Widget attributes
  - `foregroundSelector` (reference) - drawable resource for foreground floating selector.
