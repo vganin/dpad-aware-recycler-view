@@ -383,7 +383,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         Drawable refSelector = mBackgroundSelector != null
                 ? mBackgroundSelector : mForegroundSelector;
 
-        if (refSelector != null) {
+        int scrollState = getScrollState();
+
+        if (refSelector != null && scrollState == SCROLL_STATE_IDLE) {
             mSelectorSourceRect.set(refSelector.getBounds());
 
             // Focused cannot be null
@@ -392,10 +394,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
             mReusableSelectListener.mToSelect = child;
             mReusableSelectListener.mToDeselect = mLastFocusedChild;
 
-            int scrollState = getScrollState();
-            if (scrollState == SCROLL_STATE_IDLE) {
-                animateSelectorChange(mReusableSelectListener);
-            }
+            animateSelectorChange(mReusableSelectListener);
 
             mLastFocusedChild = child;
         }
