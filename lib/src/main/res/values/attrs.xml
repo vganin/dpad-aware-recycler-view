@@ -5,7 +5,5 @@
         <attr name="foregroundSelector" format="reference"/>
         <attr name="selectorVelocity" format="integer"/>
         <attr name="smoothScrolling" format="boolean"/>
-        <attr name="scrollOffsetX" format="fraction"/>
-        <attr name="scrollOffsetY" format="fraction"/>
     </declare-styleable>
 </resources>

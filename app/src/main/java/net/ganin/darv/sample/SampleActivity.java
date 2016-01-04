@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import net.ganin.darv.DpadAwareRecyclerView;
-import net.ganin.darv.GridLayoutManager;
+import net.ganin.darv.ExtGridLayoutManager;
 
 public class SampleActivity extends Activity {
 
@@ -55,7 +55,7 @@ public class SampleActivity extends Activity {
     }
 
     private void prepareFirstList(DpadAwareRecyclerView list) {
-        list.setLayoutManager(new GridLayoutManager(this, 3));
+        list.setLayoutManager(new ExtGridLayoutManager(this, 3));
 
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -129,7 +129,7 @@ public class SampleActivity extends Activity {
     }
 
     private void prepareSecondList(DpadAwareRecyclerView list) {
-        list.setLayoutManager(new GridLayoutManager(this, 1, LinearLayoutManager.HORIZONTAL, false));
+        list.setLayoutManager(new ExtGridLayoutManager(this, 1, LinearLayoutManager.HORIZONTAL, false));
 
         list.setAdapter(new RecyclerView.Adapter<RowController>() {
 
