@@ -34,7 +34,7 @@ Note: you can leave any of these attributes unspecified if you don't want this f
         app:smoothScrolling="true">
  ````
 
-  ### Note to contributors
+### Note to contributors
   Feel free to propose additional functionality, bugfixes, documentation enhancements, etc. through pull requests or issues.
 
   General long-term purpose of this library is to become the largest collection of useful functionality and workarounds for TV and other D-pad related devices. So it is appreciated to contribute not only to existing components but to add a new ones that are highly demanded in D-pad environments.
