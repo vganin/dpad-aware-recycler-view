@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Vsevolod Ganin
+ * Copyright 2016 Vsevolod Ganin
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,18 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.FocusFinder;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
+import java.util.ArrayList;
+
 public class DpadAwareRecyclerView extends RecyclerView implements
-        ViewTreeObserver.OnGlobalFocusChangeListener,
-        View.OnClickListener {
+        ViewTreeObserver.OnGlobalFocusChangeListener {
 
     /**
      * Interface definition for a callback to be invoked when an item in this
@@ -86,9 +90,64 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         void onItemFocused(DpadAwareRecyclerView parent, View view, int position, long id);
     }
 
-    private static final String TAG = "DpadAwareRecyclerView";
-
     private static final String BOUNDS_PROP_NAME = "bounds";
+
+    private class LocalAdapterDataObserver extends AdapterDataObserver {
+
+        @Override
+        public void onChanged() {
+            // Case when adapter hasn't stable ids. Other case is handled natively by RecyclerView.
+            if (!getAdapter().hasStableIds()) {
+                mPendingSelectionInt = getSelectedItemPosition();
+                if (mPendingSelectionInt == NO_POSITION) {
+                    mPendingSelectionInt = 0;
+                }
+            }
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            // Case when adapter hasn't stable ids. Other case is handled natively by RecyclerView.
+            if (!getAdapter().hasStableIds()) {
+                int selectedPos = getSelectedItemPosition();
+                if (selectedPos >= positionStart && selectedPos < positionStart + itemCount) {
+                    mPendingSelectionInt = getSelectedItemPosition();
+                }
+                if (mPendingSelectionInt == NO_POSITION) {
+                    mPendingSelectionInt = 0;
+                }
+            }
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
+            onItemRangeChanged(positionStart, itemCount);
+        }
+
+        @Override
+        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+            int selectedPos = getSelectedItemPosition();
+            if (selectedPos >= fromPosition && selectedPos < fromPosition + itemCount) {
+                setSelection(selectedPos - fromPosition + toPosition);
+            }
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            int selectedPos = getSelectedItemPosition();
+            if (selectedPos >= positionStart && selectedPos < positionStart + itemCount) {
+                setSelection(selectedPos + itemCount);
+            }
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
+            int selectedPos = getSelectedItemPosition();
+            if (selectedPos >= positionStart && selectedPos < positionStart + itemCount) {
+                setSelection(positionStart);
+            }
+        }
+    }
 
     private final class SelectAnimatorListener extends AnimatorListenerAdapter {
 
@@ -138,6 +197,23 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         }
     };
 
+    private OnItemClickListener mOnItemClickListener;
+    private OnItemSelectedListener mOnItemSelectedListener;
+
+    private final AdapterDataObserver mDataObserver = new LocalAdapterDataObserver();
+
+    /**
+     * Adapter position that will be selected after certain layout pass.
+     */
+    private int mPendingSelectionInt = NO_POSITION;
+
+    /**
+     * Focus helper.
+     */
+    private final FocusArchivist mFocusArchivist = new FocusArchivist();
+
+    private boolean mRememberLastFocus = true;
+
     private final Rect mSelectorSourceRect = new Rect();
     private final Rect mSelectorDestRect = new Rect();
     private final Interpolator mTransitionInterpolator = new LinearInterpolator();
@@ -155,11 +231,6 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private Drawable mBackgroundSelector;
 
     private Drawable mForegroundSelector;
-
-    private View mLastFocusedChild;
-
-    private OnItemClickListener mOnItemClickListener;
-    private OnItemSelectedListener mOnItemSelectedListener;
 
     public DpadAwareRecyclerView(Context context) {
         super(context);
@@ -201,6 +272,10 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
             ta.recycle();
         }
+
+        setFocusable(true);
+        setDescendantFocusability(FOCUS_BEFORE_DESCENDANTS);
+        setWillNotDraw(false);
     }
 
     public void setSelectorVelocity(int velocity) {
@@ -263,14 +338,96 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         return mOnItemSelectedListener;
     }
 
+    /**
+     * Get adapter position of item that is currently focused/selected.
+     *
+     * @return Selected item's adapter position.
+     */
+    public int getSelectedItemPosition() {
+        View focusedChild = getFocusedChild();
+        return getChildAdapterPosition(focusedChild);
+    }
+
+    /**
+     * Set adapter position for item to select if RecycleView currently has focus or schedule
+     * selection on next focus obtainment.
+     *
+     * @param adapterPosition Adapter position of item to be selected.
+     */
+    public void setSelection(int adapterPosition) {
+        scrollToPosition(adapterPosition);
+        mPendingSelectionInt = adapterPosition;
+    }
+
+    /**
+     * Get flag indicating that last focused view should be remembered in order to re-focus
+     * it in future.
+     *
+     * @return true if focus remembering is enabled, otherwise disable.
+     */
+    public boolean isRememberLastFocus() {
+        return mRememberLastFocus;
+    }
+
+    /**
+     * Set flag indicating that last focused view should be remembered in order to re-focus
+     * it in future.
+     *
+     * @param rememberLastFocus true to enable focus remembering, otherwise disable.
+     */
+    public void setRememberLastFocus(boolean rememberLastFocus) {
+        mRememberLastFocus = rememberLastFocus;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        setDescendantFocusability(enabled ? FOCUS_BEFORE_DESCENDANTS : FOCUS_BLOCK_DESCENDANTS);
+        setFocusable(enabled);
+    }
+
+    @Override
+    public void setAdapter(Adapter newAdapter) {
+        Adapter oldAdapter = getAdapter();
+        if (oldAdapter != null) {
+            oldAdapter.unregisterAdapterDataObserver(mDataObserver);
+        }
+
+        super.setAdapter(newAdapter);
+
+        if (newAdapter != null) {
+            newAdapter.registerAdapterDataObserver(mDataObserver);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+
+        if (mPendingSelectionInt != NO_POSITION) {
+            setSelectionOnLayout(mPendingSelectionInt);
+            mPendingSelectionInt = NO_POSITION;
+        }
+    }
+
+    private void setSelectionOnLayout(int position) {
+        RecyclerView.ViewHolder holder = findViewHolderForAdapterPosition(position);
+
+        if (holder != null) {
+            if (hasFocus()) {
+                holder.itemView.requestFocus();
+            } else {
+                mFocusArchivist.archiveFocus(this, holder.itemView);
+            }
+        }
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
         ViewTreeObserver obs = getViewTreeObserver();
-        if (obs != null) {
-            obs.addOnGlobalFocusChangeListener(this);
-        }
+        obs.addOnGlobalFocusChangeListener(this);
     }
 
     @Override
@@ -278,38 +435,52 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         super.onDetachedFromWindow();
 
         ViewTreeObserver obs = getViewTreeObserver();
-        if (obs != null) {
-            obs.removeOnGlobalFocusChangeListener(this);
-        }
-    }
-
-    @Override
-    public void addView(View child, int index) {
-        super.addView(child, index);
-
-        child.setOnClickListener(this);
-    }
-
-    @Override
-    public void onClick(View v) {
-        fireOnItemClickEvent(v);
+        obs.removeOnGlobalFocusChangeListener(this);
     }
 
     @Override
     public void onGlobalFocusChanged(View oldFocus, View newFocus) {
-        boolean hasFocus = hasFocus();
+        // FIXME: Parent view will get focus and immediately lose it in favor of some child.
+        // So we actually can't enforce selectors visibility solely by placing this
+        // in onFocusChanged(). Hence we handle it this way.
+        enforceSelectorsVisibility(isInTouchMode(), hasFocus());
+    }
 
-        enforceSelectorsVisibility(isInTouchMode(), hasFocus);
+    @Override
+    protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
 
-        if (!hasFocus) {
-            if (mSelectorAnimator != null) {
-                mSelectorAnimator.cancel();
+        if (gainFocus) {
+            // We favor natural focus if we don't want to remember focus AND if previously focused
+            // rectangle is NOT null. Usually latter condition holds true if simple requestFocus()
+            // is called and holds false if focus changed during navigation. Overall this is done
+            // because of backward compatibility - some code is dependent on the fact that
+            // focused position will be restored if requestFocus() is called and it expects
+            // to have natural focus when ordinary navigation happens.
+            boolean favorNaturalFocus = !mRememberLastFocus && previouslyFocusedRect != null;
+            View lastFocusedView = mFocusArchivist.getLastFocus(this);
+            if (favorNaturalFocus || lastFocusedView == null) {
+                requestNaturalFocus(direction, previouslyFocusedRect);
+            } else {
+                lastFocusedView.requestFocus();
             }
+        }
+    }
 
-            if (mLastFocusedChild != null) {
-                childSetSelected(mLastFocusedChild, false);
-                mLastFocusedChild = null;
-            }
+    /**
+     * Request natural focus.
+     *
+     * @param direction direction in which focus is changing.
+     * @param previouslyFocusedRect previously focus rectangle.
+     */
+    private void requestNaturalFocus(int direction, Rect previouslyFocusedRect) {
+        FocusFinder ff = FocusFinder.getInstance();
+        previouslyFocusedRect = previouslyFocusedRect == null
+                ? new Rect(0, 0, 0, 0) : previouslyFocusedRect;
+        View toFocus = ff.findNextFocusFromRect(this, previouslyFocusedRect, direction);
+        toFocus = toFocus == null ? getChildAt(0) : toFocus;
+        if (toFocus != null) {
+            toFocus.requestFocus();
         }
     }
 
@@ -342,24 +513,24 @@ public class DpadAwareRecyclerView extends RecyclerView implements
             focused.getHitRect(mSelectorDestRect);
 
             mReusableSelectListener.mToSelect = child;
-            mReusableSelectListener.mToDeselect = mLastFocusedChild;
+            mReusableSelectListener.mToDeselect = mFocusArchivist.getLastFocus(this);
 
             int scrollState = getScrollState();
             if (scrollState == SCROLL_STATE_IDLE) {
                 animateSelectorChange(mReusableSelectListener);
             }
 
-            mLastFocusedChild = child;
+            mFocusArchivist.archiveFocus(this, child);
         }
     }
 
     @Override
-    protected void dispatchDraw(@NonNull Canvas canvas) {
+    public void onDraw(@NonNull Canvas canvas) {
         if (mBackgroundSelector != null && mBackgroundSelector.isVisible()) {
             mBackgroundSelector.draw(canvas);
         }
 
-        super.dispatchDraw(canvas);
+        super.onDraw(canvas);
 
         if (mForegroundSelector != null && mForegroundSelector.isVisible()) {
             mForegroundSelector.draw(canvas);
@@ -434,6 +605,47 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
         if (selected) {
             fireOnItemSelectedEvent(child);
+        }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        boolean consumed = super.dispatchKeyEvent(event);
+
+        View focusedChild = getFocusedChild();
+
+        if (focusedChild != null
+                && mOnItemClickListener != null
+                && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER
+                && event.getRepeatCount() == 0) {
+            fireOnItemClickEvent(focusedChild);
+        }
+
+        return consumed;
+    }
+
+    @Override
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        super.addView(child, index, params);
+
+        if (mOnItemClickListener != null) {
+            child.setClickable(true);
+        }
+    }
+
+    @Override
+    public void getFocusedRect(Rect r) {
+        getDrawingRect(r);
+    }
+
+    @Override
+    public void addFocusables(ArrayList<View> views, int direction, int focusableMode) {
+        // Allow focus on children only if focus is already in this view
+        if (hasFocus()) {
+            super.addFocusables(views, direction, focusableMode);
+        } else if (isFocusable()) {
+            views.add(this);
         }
     }
 
