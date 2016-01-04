@@ -40,6 +40,9 @@ import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
 
+/**
+ * RecyclerView adaptation for D-pad.
+ */
 public class DpadAwareRecyclerView extends RecyclerView implements
         ViewTreeObserver.OnGlobalFocusChangeListener {
 
