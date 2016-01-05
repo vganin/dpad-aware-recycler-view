@@ -26,10 +26,12 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Property;
 import android.view.FocusFinder;
 import android.view.KeyEvent;
 import android.view.View;
@@ -38,6 +40,8 @@ import android.view.ViewTreeObserver;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 
 /**
@@ -93,7 +97,26 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         void onItemFocused(DpadAwareRecyclerView parent, View view, int position, long id);
     }
 
-    private static final String BOUNDS_PROP_NAME = "bounds";
+    private static final Property<Drawable, Rect> BOUNDS_PROP = Property.of(
+            Drawable.class, Rect.class, "bounds");
+
+    /**
+     * Selector type.
+     * <p>
+     * Don't forget to change {@link #SELECTOR_COUNT} as well.
+     */
+    @IntDef({ FOREGROUND, BACKGROUND })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface Selector {}
+
+    /*
+       Selector types.
+       Enumeration must start with 0 and be less than SELECTOR_COUNT.
+       See enforceSelectorIndexBounds method.
+     */
+    private static final int FOREGROUND = 0;
+    private static final int BACKGROUND = 1;
+    private static final int SELECTOR_COUNT = 2;
 
     private class LocalAdapterDataObserver extends AdapterDataObserver {
 
@@ -217,23 +240,19 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     private boolean mRememberLastFocus = true;
 
+    private boolean mSmoothScrolling = false;
+
+    /* Selector attributes */
     private final Rect mSelectorSourceRect = new Rect();
     private final Rect mSelectorDestRect = new Rect();
     private final Interpolator mTransitionInterpolator = new LinearInterpolator();
-    private final Animator mBackgroundSelectorAnimator = createHollowSelectorAnimator();
-    private final Animator mForegroundSelectorAnimator = createHollowSelectorAnimator();
-
+    private final Animator[] mSelectorAnimators = new Animator[SELECTOR_COUNT];
+    private final Drawable[] mSelectorDrawables = new Drawable[SELECTOR_COUNT];
     private AnimatorSet mSelectorAnimator; // Unfortunately cannot be reused
+    private int mSelectorVelocity = 0;
+    /* Selector attributes */
 
     private final SelectAnimatorListener mReusableSelectListener = new SelectAnimatorListener();
-
-    private int mSelectorVelocity = 0;
-
-    private boolean mSmoothScrolling = false;
-
-    private Drawable mBackgroundSelector;
-
-    private Drawable mForegroundSelector;
 
     public DpadAwareRecyclerView(@NonNull Context context) {
         super(context);
@@ -298,9 +317,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     public void setBackgroundSelector(Drawable drawable) {
-        mBackgroundSelector = drawable;
-        mBackgroundSelectorAnimator.setTarget(mBackgroundSelector);
-        setSelectorCallback(mForegroundSelector);
+        setSelector(BACKGROUND, drawable);
     }
 
     public void setBackgroundSelector(int resId) {
@@ -308,13 +325,11 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     public Drawable getBackgroundSelector() {
-        return mBackgroundSelector;
+        return getSelector(FOREGROUND);
     }
 
     public void setForegroundSelector(Drawable drawable) {
-        mForegroundSelector = drawable;
-        mForegroundSelectorAnimator.setTarget(mForegroundSelector);
-        setSelectorCallback(mForegroundSelector);
+        setSelector(FOREGROUND, drawable);
     }
 
     public void setForegroundSelector(int resId) {
@@ -322,7 +337,34 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     public Drawable getForegroundSelector() {
-        return mForegroundSelector;
+        return getSelector(FOREGROUND);
+    }
+
+    private void setSelector(@Selector int index, Drawable drawable) {
+        enforceSelectorIndexBounds(index);
+
+        mSelectorDrawables[index] = drawable;
+        mSelectorAnimators[index] = createSelectorAnimator(drawable);
+        setSelectorCallback(drawable);
+    }
+
+    private Drawable getSelector(int index) {
+        enforceSelectorIndexBounds(index);
+
+        return mSelectorDrawables[index];
+    }
+
+    /**
+     * Ensures that passed number is valid selector index.
+     *
+     * @param index selector index
+     * @throws IndexOutOfBoundsException if index is not valid selector index
+     */
+    private void enforceSelectorIndexBounds(int index) {
+        if (index < 0 || index >= SELECTOR_COUNT) {
+            throw new IndexOutOfBoundsException("Passed index is not in valid range which is"
+                    + " [0; " + SELECTOR_COUNT + ").");
+        }
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -506,8 +548,14 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     private void requestChildFocusInner(View child, @NonNull View focused) {
-        Drawable refSelector = mBackgroundSelector != null
-                ? mBackgroundSelector : mForegroundSelector;
+        // Try to find first non-null selector to take it as an anchor.
+        Drawable refSelector = null;
+        for (Drawable selector : mSelectorDrawables) {
+            if (selector != null) {
+                refSelector = selector;
+                break;
+            }
+        }
 
         int scrollState = getScrollState();
 
@@ -528,14 +576,19 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     @Override
     public void onDraw(@NonNull Canvas canvas) {
-        if (mBackgroundSelector != null && mBackgroundSelector.isVisible()) {
-            mBackgroundSelector.draw(canvas);
-        }
+        drawSelectorIfVisible(BACKGROUND, canvas);
 
         super.onDraw(canvas);
 
-        if (mForegroundSelector != null && mForegroundSelector.isVisible()) {
-            mForegroundSelector.draw(canvas);
+        drawSelectorIfVisible(FOREGROUND, canvas);
+    }
+
+    private void drawSelectorIfVisible(@Selector int index, Canvas canvas) {
+        enforceSelectorIndexBounds(index);
+
+        Drawable selector = mSelectorDrawables[index];
+        if (selector != null && selector.isVisible()) {
+            selector.draw(canvas);
         }
     }
 
@@ -549,12 +602,8 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
         mSelectorAnimator = new AnimatorSet();
 
-        if (mForegroundSelector != null) {
-            mSelectorAnimator.playTogether(mForegroundSelectorAnimator);
-        }
-
-        if (mBackgroundSelector != null) {
-            mSelectorAnimator.playTogether(mBackgroundSelectorAnimator);
+        for (int i = 0; i < SELECTOR_COUNT; i++) {
+            mSelectorAnimator.playTogether(mSelectorAnimators[i]);
         }
 
         mSelectorAnimator.setInterpolator(mTransitionInterpolator);
@@ -571,10 +620,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         mSelectorAnimator.start();
     }
 
-    private Animator createHollowSelectorAnimator() {
+    private Animator createSelectorAnimator(@Nullable Drawable selector) {
         return ObjectAnimator.ofObject(
-                // Escaping ambiguous error, not redundant
-                (Object) null, BOUNDS_PROP_NAME, new RectEvaluator(),
+                selector, BOUNDS_PROP, new RectEvaluator(),
                 mSelectorSourceRect, mSelectorDestRect);
     }
 
@@ -585,8 +633,11 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private void enforceSelectorsVisibility(boolean isInTouchMode, boolean hasFocus) {
         boolean visible = !isInTouchMode && hasFocus;
 
-        if (mBackgroundSelector != null) mBackgroundSelector.setVisible(visible, false);
-        if (mForegroundSelector != null) mForegroundSelector.setVisible(visible, false);
+        for (Drawable selector : mSelectorDrawables) {
+            if (selector != null) {
+                selector.setVisible(visible, false);
+            }
+        }
     }
 
     @Nullable
