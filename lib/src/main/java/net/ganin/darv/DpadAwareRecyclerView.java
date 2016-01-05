@@ -573,7 +573,8 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     private Animator createHollowSelectorAnimator() {
         return ObjectAnimator.ofObject(
-                null, BOUNDS_PROP_NAME, new RectEvaluator(),
+                // Escaping ambiguous error, not redundant
+                (Object) null, BOUNDS_PROP_NAME, new RectEvaluator(),
                 mSelectorSourceRect, mSelectorDestRect);
     }
 
