@@ -23,9 +23,9 @@ import android.graphics.Rect;
  * Simple {@link Rect} evaluator. Made because of minimum SDK which doesn't contain
  * implementation.
  */
-public class RectEvaluator implements TypeEvaluator<Rect> {
+class RectEvaluator implements TypeEvaluator<Rect> {
 
-    private Rect mCacheRect = new Rect();
+    private final Rect mCacheRect = new Rect();
 
     @Override
     public Rect evaluate(float fraction, Rect startValue, Rect endValue) {

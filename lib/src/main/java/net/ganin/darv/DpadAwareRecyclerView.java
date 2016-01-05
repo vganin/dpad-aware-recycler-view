@@ -220,8 +220,8 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     private final Rect mSelectorSourceRect = new Rect();
     private final Rect mSelectorDestRect = new Rect();
     private final Interpolator mTransitionInterpolator = new LinearInterpolator();
-    private final Animator mBackgroundSelectorAnimator = createAnimatorForSelector(null);
-    private final Animator mForegroundSelectorAnimator = createAnimatorForSelector(null);
+    private final Animator mBackgroundSelectorAnimator = createHollowSelectorAnimator();
+    private final Animator mForegroundSelectorAnimator = createHollowSelectorAnimator();
 
     private AnimatorSet mSelectorAnimator; // Unfortunately cannot be reused
 
@@ -571,9 +571,9 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         mSelectorAnimator.start();
     }
 
-    private Animator createAnimatorForSelector(final Drawable selector) {
+    private Animator createHollowSelectorAnimator() {
         return ObjectAnimator.ofObject(
-                selector, BOUNDS_PROP_NAME, new RectEvaluator(),
+                null, BOUNDS_PROP_NAME, new RectEvaluator(),
                 mSelectorSourceRect, mSelectorDestRect);
     }
 

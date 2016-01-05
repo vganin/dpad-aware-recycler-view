@@ -181,9 +181,9 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @return New {@link ExtGridLayoutManager} instance.
          */
         public ExtGridLayoutManager build() {
-            ExtGridLayoutManager nemoLM = new ExtGridLayoutManager(
+            ExtGridLayoutManager lm = new ExtGridLayoutManager(
                     mCtx, mSpanCount, mOrientation, mReverseOrder);
-            return configure(nemoLM);
+            return configure(lm);
         }
 
         private ExtGridLayoutManager configure(ExtGridLayoutManager inst) {
@@ -210,7 +210,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     private int mSpanCount = AUTO_FIT;
 
     /**
-     * Px size of one span. Only used if {@link #mSpanSize} equals to {@link #AUTO_FIT}.
+     * Px size of one span. Only used if value equals to {@link #AUTO_FIT}.
      * If size <= 0 then one tries to determine size itself.
      * Actual resolution of auto fit happens in {@link #resolveAutoFit(RecyclerView.Recycler)}.
      */
@@ -258,11 +258,11 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     }
 
     public void setArrowTowardBegin(View arrowTowardBegin) {
-        mArrowTowardBeginRef = new WeakReference<View>(arrowTowardBegin);
+        mArrowTowardBeginRef = new WeakReference<>(arrowTowardBegin);
     }
 
     public void setArrowTowardEnd(View arrowTowardEnd) {
-        mArrowTowardEndRef = new WeakReference<View>(arrowTowardEnd);
+        mArrowTowardEndRef = new WeakReference<>(arrowTowardEnd);
     }
 
     public View getArrowTowardBegin() {
