@@ -16,6 +16,8 @@
 
 package net.ganin.darv;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
@@ -36,7 +38,7 @@ class FocusArchivist {
      *
      * @param rv Recycler view.
      */
-    void archiveFocus(RecyclerView rv) {
+    void archiveFocus(@NonNull RecyclerView rv) {
         if (rv.hasFocus()) {
             View focusedChild = rv.getFocusedChild();
             archiveFocus(rv, focusedChild);
@@ -49,7 +51,7 @@ class FocusArchivist {
      * @param rv Recycler view.
      * @param child child of that recycler view.
      */
-    void archiveFocus(RecyclerView rv, View child) {
+    void archiveFocus(@NonNull RecyclerView rv, View child) {
         mLastSelectedPos = rv.getChildAdapterPosition(child);
         mLastSelectedId = rv.getChildItemId(child);
     }
@@ -60,7 +62,8 @@ class FocusArchivist {
      * @param rv Recycler view.
      * @return Last focused view. Returns null if no appropriate view was found.
      */
-    View getLastFocus(RecyclerView rv) {
+    @Nullable
+    View getLastFocus(@NonNull RecyclerView rv) {
         View lastFocused = findLastFocusedViewById(rv, mLastSelectedId);
 
         if (lastFocused != null) {
@@ -77,7 +80,7 @@ class FocusArchivist {
      * @param id Item's id.
      * @return View with such id, if selection can be restored on it. Null otherwise.
      */
-    private View findLastFocusedViewById(RecyclerView rv, long id) {
+    private View findLastFocusedViewById(@NonNull RecyclerView rv, long id) {
         RecyclerView.Adapter adapter = rv.getAdapter();
         if (adapter != null && adapter.hasStableIds() && mLastSelectedId != NO_ID) {
             RecyclerView.ViewHolder viewHolder = rv.findViewHolderForItemId(id);
@@ -97,7 +100,7 @@ class FocusArchivist {
      * @param pos Item's pos.
      * @return View with such position, if selection can be restored on it. Null otherwise.
      */
-    private View findLastFocusedViewByPos(RecyclerView rv, int pos) {
+    private View findLastFocusedViewByPos(@NonNull RecyclerView rv, int pos) {
         if (pos != NO_POSITION) {
             RecyclerView.ViewHolder viewHolder = rv.findViewHolderForAdapterPosition(pos);
             if (viewHolder != null) {

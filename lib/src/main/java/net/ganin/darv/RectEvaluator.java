@@ -18,6 +18,7 @@ package net.ganin.darv;
 
 import android.animation.TypeEvaluator;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 
 /**
  * Simple {@link Rect} evaluator. Made because of minimum SDK which doesn't contain
@@ -27,8 +28,9 @@ class RectEvaluator implements TypeEvaluator<Rect> {
 
     private final Rect mCacheRect = new Rect();
 
+    @NonNull
     @Override
-    public Rect evaluate(float fraction, Rect startValue, Rect endValue) {
+    public Rect evaluate(float fraction, @NonNull Rect startValue, @NonNull Rect endValue) {
         int left = startValue.left + (int) ((endValue.left - startValue.left) * fraction);
         int top = startValue.top + (int) ((endValue.top - startValue.top) * fraction);
         int right = startValue.right + (int) ((endValue.right - startValue.right) * fraction);

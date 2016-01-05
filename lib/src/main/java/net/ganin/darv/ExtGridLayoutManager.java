@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.support.annotation.DimenRes;
 import android.support.annotation.FloatRange;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -54,7 +55,9 @@ public class ExtGridLayoutManager extends GridLayoutManager {
         private int mSpanCount = AUTO_FIT;
         private int mOrientation = GridLayoutManager.VERTICAL;
         private boolean mReverseOrder = false;
+        @Nullable
         private View mArrowTowardBegin;
+        @Nullable
         private View mArrowTowardEnd;
         private int mSpanSize = 0;
 
@@ -68,6 +71,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @param offsetFraction Offset fraction.
          * @return This builder instance for chaining.
          */
+        @NonNull
         public Builder offsetFraction(@FloatRange(from = 0.f, to = 1.f) float offsetFraction) {
             mOffsetFraction = offsetFraction;
             mOffsetEnabled = true;
@@ -80,6 +84,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @param circular if true, make navigation circular.
          * @return This builder instance for chaining.
          */
+        @NonNull
         public Builder circular(boolean circular) {
             mCircular = circular;
             return this;
@@ -95,6 +100,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          *
          * @see GridLayoutManager#setSpanCount(int)
          */
+        @NonNull
         public Builder spanCount(int spanCount) {
             if (spanCount < 1 && spanCount != AUTO_FIT) {
                 throw new IllegalArgumentException("Span count must be > 0 or AUTO_FIT");
@@ -112,6 +118,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          *
          * @see GridLayoutManager#setOrientation(int)
          */
+        @NonNull
         public Builder orientation(int orientation) {
             mOrientation = orientation;
             return this;
@@ -125,6 +132,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          *
          * @see GridLayoutManager#setReverseLayout(boolean)
          */
+        @NonNull
         public Builder reverseOrder(boolean reverseOrder) {
             mReverseOrder = reverseOrder;
             return this;
@@ -139,6 +147,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @param arrowTowardEnd View to hide when user see end data.
          * @return This builder instance for chaining.
          */
+        @NonNull
         public Builder navigationArrows(@Nullable View arrowTowardBegin,
                 @Nullable View arrowTowardEnd) {
             mArrowTowardBegin = arrowTowardBegin;
@@ -156,6 +165,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @param spanSizePx span size in px.
          * @return This builder instance for chaining.
          */
+        @NonNull
         public Builder spanSizePx(int spanSizePx) {
             mSpanSize = spanSizePx;
             return this;
@@ -171,6 +181,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          * @param spanSizeRes span size resource.
          * @return This builder instance for chaining.
          */
+        @NonNull
         public Builder spanSizeRes(@DimenRes int spanSizeRes) {
             return spanSizePx(mCtx.getResources().getDimensionPixelSize(spanSizeRes));
         }
@@ -180,13 +191,15 @@ public class ExtGridLayoutManager extends GridLayoutManager {
          *
          * @return New {@link ExtGridLayoutManager} instance.
          */
+        @NonNull
         public ExtGridLayoutManager build() {
             ExtGridLayoutManager lm = new ExtGridLayoutManager(
                     mCtx, mSpanCount, mOrientation, mReverseOrder);
             return configure(lm);
         }
 
-        private ExtGridLayoutManager configure(ExtGridLayoutManager inst) {
+        @NonNull
+        private ExtGridLayoutManager configure(@NonNull ExtGridLayoutManager inst) {
             inst.setCircular(mCircular);
             if (mOffsetEnabled) inst.setOffset(mOffsetFraction);
             inst.setArrowTowardBegin(mArrowTowardBegin);
@@ -265,10 +278,12 @@ public class ExtGridLayoutManager extends GridLayoutManager {
         mArrowTowardEndRef = new WeakReference<>(arrowTowardEnd);
     }
 
+    @Nullable
     public View getArrowTowardBegin() {
         return mArrowTowardBeginRef == null ? null : mArrowTowardBeginRef.get();
     }
 
+    @Nullable
     public View getArrowTowardEnd() {
         return mArrowTowardEndRef == null ? null : mArrowTowardEndRef.get();
     }
@@ -294,7 +309,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state, int widthSpec,
+    public void onMeasure(@NonNull RecyclerView.Recycler recycler, RecyclerView.State state, int widthSpec,
             int heightSpec) {
         boolean wrap;
 
@@ -337,7 +352,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
         }
     }
 
-    private void resolveAutoFit(RecyclerView.Recycler recycler) {
+    private void resolveAutoFit(@NonNull RecyclerView.Recycler recycler) {
         int orientation = getOrientation();
 
         // Have no span size data. Trying to determine it from what children want themselves.
@@ -356,7 +371,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+    public void onLayoutChildren(RecyclerView.Recycler recycler, @NonNull RecyclerView.State state) {
         super.onLayoutChildren(recycler, state);
 
         if (mPendingChildPositionToFocus != DO_NOT_FOCUS) {
@@ -394,7 +409,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    public View onFocusSearchFailed(View focused, int focusDirection,
+    public View onFocusSearchFailed(@NonNull View focused, int focusDirection,
             RecyclerView.Recycler recycler, RecyclerView.State state) {
         View nextView = super.onFocusSearchFailed(focused, focusDirection, recycler, state);
 
@@ -440,7 +455,7 @@ public class ExtGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    public boolean requestChildRectangleOnScreen(RecyclerView parent, View child, Rect rect,
+    public boolean requestChildRectangleOnScreen(@NonNull RecyclerView parent, @NonNull View child, @NonNull Rect rect,
             boolean immediate) {
         if (!mOffsetEnabled) {
             return super.requestChildRectangleOnScreen(parent, child, rect, true);

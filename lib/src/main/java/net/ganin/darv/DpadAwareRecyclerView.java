@@ -185,7 +185,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
      */
     private final Drawable.Callback mSelectorCallback = new Drawable.Callback() {
         @Override
-        public void invalidateDrawable(Drawable who) {
+        public void invalidateDrawable(@NonNull Drawable who) {
             invalidate(who.getBounds());
         }
 
@@ -235,22 +235,22 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     private Drawable mForegroundSelector;
 
-    public DpadAwareRecyclerView(Context context) {
+    public DpadAwareRecyclerView(@NonNull Context context) {
         super(context);
         init(context, null, 0);
     }
 
-    public DpadAwareRecyclerView(Context context, AttributeSet attrs) {
+    public DpadAwareRecyclerView(@NonNull Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs, 0);
     }
 
-    public DpadAwareRecyclerView(Context context, AttributeSet attrs, int defStyle) {
+    public DpadAwareRecyclerView(@NonNull Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context, attrs, defStyle);
     }
 
-    private void init(Context context, AttributeSet attrs, int defStyle) {
+    private void init(@NonNull Context context, @Nullable AttributeSet attrs, int defStyle) {
         if (attrs != null) {
             TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.DpadAwareRecyclerView,
                     defStyle, 0);
@@ -390,7 +390,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    public void setAdapter(Adapter newAdapter) {
+    public void setAdapter(@Nullable Adapter newAdapter) {
         Adapter oldAdapter = getAdapter();
         if (oldAdapter != null) {
             oldAdapter.unregisterAdapterDataObserver(mDataObserver);
@@ -450,7 +450,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
+    protected void onFocusChanged(boolean gainFocus, int direction, @Nullable Rect previouslyFocusedRect) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
 
         if (gainFocus) {
@@ -488,7 +488,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    public void requestChildFocus(View child, View focused) {
+    public void requestChildFocus(View child, @NonNull View focused) {
         super.requestChildFocus(child, focused);
 
         requestChildFocusInner(child, focused);
@@ -505,7 +505,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         }
     }
 
-    private void requestChildFocusInner(View child, View focused) {
+    private void requestChildFocusInner(View child, @NonNull View focused) {
         Drawable refSelector = mBackgroundSelector != null
                 ? mBackgroundSelector : mForegroundSelector;
 
@@ -589,6 +589,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         if (mForegroundSelector != null) mForegroundSelector.setVisible(visible, false);
     }
 
+    @Nullable
     private Drawable getDrawableResource(int resId) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return getResources().getDrawable(resId, getContext().getTheme());
@@ -597,13 +598,13 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         }
     }
 
-    private void setSelectorCallback(Drawable selector) {
+    private void setSelectorCallback(@Nullable Drawable selector) {
         if (selector != null) {
             selector.setCallback(mSelectorCallback);
         }
     }
 
-    private void childSetSelected(View child, boolean selected) {
+    private void childSetSelected(@NonNull View child, boolean selected) {
         child.setSelected(selected);
 
         if (selected) {
@@ -612,7 +613,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
+    public boolean dispatchKeyEvent(@NonNull KeyEvent event) {
         boolean consumed = super.dispatchKeyEvent(event);
 
         View focusedChild = getFocusedChild();
@@ -629,7 +630,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+    public void addView(@NonNull View child, int index, ViewGroup.LayoutParams params) {
         super.addView(child, index, params);
 
         if (mOnItemClickListener != null) {
@@ -643,7 +644,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     @Override
-    public void addFocusables(ArrayList<View> views, int direction, int focusableMode) {
+    public void addFocusables(@NonNull ArrayList<View> views, int direction, int focusableMode) {
         // Allow focus on children only if focus is already in this view
         if (hasFocus()) {
             super.addFocusables(views, direction, focusableMode);
