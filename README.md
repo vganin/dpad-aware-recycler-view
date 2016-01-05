@@ -14,6 +14,7 @@ Collection of useful RecyclerView functionality for D-pad environments.
    - Circular navigation.
    - `AUTO_FIT` support similar to GridView.
    - 'Arrow' views (any views really) indicating begin or end is reached.
+   - It supports `wrap_content` in axis different from specified as orientation. Calculations are based on item's specified width and length.
 
 ### `DpadAwareRecyclerView` attributes
  - `foregroundSelector` (reference) - drawable resource for foreground floating selector.
