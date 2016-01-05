@@ -26,6 +26,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -59,40 +60,40 @@ public class DpadAwareRecyclerView extends RecyclerView implements
          * Callback method to be invoked when an item in this DpadAwareRecyclerView has
          * been clicked.
          *
-         * @param parent The DpadAwareRecyclerView where the click happened.
-         * @param view The view within the DpadAwareRecyclerView that was clicked (this
-         * will be a view provided by the adapter)
-         * @param position The position of the view in the adapter.
-         * @param id The row id of the item that was clicked.
+         * @param parent   the DpadAwareRecyclerView where the click happened
+         * @param view     the view within the DpadAwareRecyclerView that was clicked (this
+         *                 will be a view provided by the adapter)
+         * @param position the position of the view in the adapter
+         * @param id       the row id of the item that was clicked
          */
         void onItemClick(DpadAwareRecyclerView parent, View view, int position, long id);
     }
 
     /**
-     * <p>Interface definition for a callback to be invoked when
-     * an item in this view has been selected.</p>
-     *
-     * <p>Note that this interface differs from classic
+     * Interface definition for a callback to be invoked when
+     * an item in this view has been selected.
+     * <p>
+     * Note that this interface differs from classic
      * {@link android.widget.AdapterView.OnItemSelectedListener}.
      */
     public interface OnItemSelectedListener {
         /**
          * Will be called when selector arrives at place.
          *
-         * @param parent The DpadAwareRecyclerView where the selection happened
-         * @param view The view within the DpadAwareRecyclerView that was selected
+         * @param parent   The DpadAwareRecyclerView where the selection happened
+         * @param view     The view within the DpadAwareRecyclerView that was selected
          * @param position The position of the view in the adapter
-         * @param id The row id of the item that is selected
+         * @param id       The row id of the item that is selected
          */
         void onItemSelected(DpadAwareRecyclerView parent, View view, int position, long id);
 
         /**
          * Will be called immediately after user issues controller command.
          *
-         * @param parent The DpadAwareRecyclerView where the selection happened
-         * @param view The view within the DpadAwareRecyclerView that was selected
+         * @param parent   The DpadAwareRecyclerView where the selection happened
+         * @param view     The view within the DpadAwareRecyclerView that was selected
          * @param position The position of the view in the adapter
-         * @param id The row id of the item that is selected
+         * @param id       The row id of the item that is selected
          */
         void onItemFocused(DpadAwareRecyclerView parent, View view, int position, long id);
     }
@@ -254,16 +255,25 @@ public class DpadAwareRecyclerView extends RecyclerView implements
 
     private final SelectAnimatorListener mReusableSelectListener = new SelectAnimatorListener();
 
+    /**
+     * {@inheritDoc}
+     */
     public DpadAwareRecyclerView(@NonNull Context context) {
         super(context);
         init(context, null, 0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public DpadAwareRecyclerView(@NonNull Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs, 0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public DpadAwareRecyclerView(@NonNull Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context, attrs, defStyle);
@@ -300,42 +310,95 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         setWillNotDraw(false);
     }
 
+    /**
+     * Sets selectors velocity. Zero or less velocity means that transition will be instant.
+     *
+     * @param velocity velocity's values
+     */
     public void setSelectorVelocity(int velocity) {
         mSelectorVelocity = velocity;
     }
 
+    /**
+     * Gets selectors velocity.
+     *
+     * @return selectors velocity
+     */
     public int getSelectorVelocity() {
         return mSelectorVelocity;
     }
 
+    /**
+     * Sets smooth scrolling flag. If set to true, container will smoothly scroll to selected child
+     * if it is outside of the viewport (by viewport one means some 'camera' rectangle, not
+     * necessarily all screen).
+     *
+     * @param smoothScrolling if true, enable smooth scrolling
+     */
     public void setSmoothScrolling(boolean smoothScrolling) {
         mSmoothScrolling = smoothScrolling;
     }
 
+    /**
+     * Gets smooth scrolling flag.
+     *
+     * @return true if smooth scrolling is enabled
+     * @see #setSmoothScrolling
+     */
     public boolean getSmoothScrolling() {
         return mSmoothScrolling;
     }
 
+    /**
+     * Sets background selector which will be drawn behind the child.
+     *
+     * @param drawable selector drawable
+     */
     public void setBackgroundSelector(Drawable drawable) {
         setSelector(BACKGROUND, drawable);
     }
 
-    public void setBackgroundSelector(int resId) {
+    /**
+     * Sets background selector which will be drawn behind the child.
+     *
+     * @param resId selector drawable's resource ID
+     */
+    public void setBackgroundSelector(@DrawableRes int resId) {
         setBackgroundSelector(getDrawableResource(resId));
     }
 
+    /**
+     * Gets background selector which will be drawn behind the child.
+     *
+     * @return background selector
+     */
     public Drawable getBackgroundSelector() {
         return getSelector(FOREGROUND);
     }
 
+    /**
+     * Sets foreground selector which will be drawn atop of the child.
+     *
+     * @param drawable selector drawable
+     */
     public void setForegroundSelector(Drawable drawable) {
         setSelector(FOREGROUND, drawable);
     }
 
-    public void setForegroundSelector(int resId) {
+    /**
+     * Sets foreground selector which will be drawn atop of the child.
+     *
+     * @param resId selector drawable's resource ID
+     */
+    public void setForegroundSelector(@DrawableRes int resId) {
         setForegroundSelector(getDrawableResource(resId));
     }
 
+    /**
+     * Gets foreground selector which will be drawn atop of the child.
+     *
+     * @return foreground selector
+     */
     public Drawable getForegroundSelector() {
         return getSelector(FOREGROUND);
     }
@@ -367,18 +430,38 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         }
     }
 
+    /**
+     * Register a callback to be invoked when an item in this RecyclerView has
+     * been clicked.
+     *
+     * @param listener the callback that will be invoked
+     */
     public void setOnItemClickListener(OnItemClickListener listener) {
         mOnItemClickListener = listener;
     }
 
+    /**
+     * @return the callback to be invoked with an item in this RecyclerView has
+     *         been clicked, or null if no callback has been set
+     */
     public OnItemClickListener getOnItemClickListener() {
         return mOnItemClickListener;
     }
 
+    /**
+     * Register a callback to be invoked when an item in this RecyclerView has
+     * been selected.
+     *
+     * @param listener the callback that will run
+     */
     public void setOnItemSelectedListener(OnItemSelectedListener listener) {
         mOnItemSelectedListener = listener;
     }
 
+    /**
+     * @return the callback to be invoked with an item in this RecyclerView has
+     *         been selected, or null if no callback has been set
+     */
     public OnItemSelectedListener getOnItemSelectedListener() {
         return mOnItemSelectedListener;
     }
@@ -386,7 +469,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     /**
      * Get adapter position of item that is currently focused/selected.
      *
-     * @return Selected item's adapter position.
+     * @return selected item's adapter position
      */
     public int getSelectedItemPosition() {
         View focusedChild = getFocusedChild();
@@ -397,7 +480,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
      * Set adapter position for item to select if RecycleView currently has focus or schedule
      * selection on next focus obtainment.
      *
-     * @param adapterPosition Adapter position of item to be selected.
+     * @param adapterPosition adapter position of item to be selected
      */
     public void setSelection(int adapterPosition) {
         scrollToPosition(adapterPosition);
@@ -408,7 +491,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
      * Get flag indicating that last focused view should be remembered in order to re-focus
      * it in future.
      *
-     * @return true if focus remembering is enabled, otherwise disable.
+     * @return true if focus remembering is enabled, otherwise disable
      */
     public boolean isRememberLastFocus() {
         return mRememberLastFocus;
@@ -418,7 +501,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
      * Set flag indicating that last focused view should be remembered in order to re-focus
      * it in future.
      *
-     * @param rememberLastFocus true to enable focus remembering, otherwise disable.
+     * @param rememberLastFocus true to enable focus remembering, otherwise disable
      */
     public void setRememberLastFocus(boolean rememberLastFocus) {
         mRememberLastFocus = rememberLastFocus;
@@ -515,8 +598,8 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     /**
      * Request natural focus.
      *
-     * @param direction direction in which focus is changing.
-     * @param previouslyFocusedRect previously focus rectangle.
+     * @param direction             direction in which focus is changing
+     * @param previouslyFocusedRect previously focus rectangle
      */
     private void requestNaturalFocus(int direction, Rect previouslyFocusedRect) {
         FocusFinder ff = FocusFinder.getInstance();
@@ -593,7 +676,7 @@ public class DpadAwareRecyclerView extends RecyclerView implements
     }
 
     /**
-     * Animates selector {@link Drawable} when changes happen.
+     * Animates selector when changes happen.
      */
     private void animateSelectorChange(Animator.AnimatorListener listener) {
         if (mSelectorAnimator != null) {
