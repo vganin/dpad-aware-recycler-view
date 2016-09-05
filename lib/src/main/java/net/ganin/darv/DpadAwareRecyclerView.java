@@ -755,12 +755,17 @@ public class DpadAwareRecyclerView extends RecyclerView implements
         if (focusedChild != null
                 && mOnItemClickListener != null
                 && event.getAction() == KeyEvent.ACTION_DOWN
-                && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER
+                && isClickEvent(event)
                 && event.getRepeatCount() == 0) {
             fireOnItemClickEvent(focusedChild);
         }
 
         return consumed;
+    }
+
+    private boolean isClickEvent(@NonNull KeyEvent event) {
+        int keyCode = event.getKeyCode();
+        return keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER;
     }
 
     @Override
